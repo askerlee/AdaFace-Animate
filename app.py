@@ -10,63 +10,109 @@ from infer import load_model
 MAX_SEED=10000
 import uuid
 from insightface.app import FaceAnalysis
-
-# model = load_model()
-app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-app.prepare(ctx_id=0, det_size=(320, 320))
-from insightface.app import FaceAnalysis
-
-
-
-def swap_to_gallery(images):
-    return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(visible=False)
-def remove_back_to_files():
-    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)
-def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
-    if randomize_seed:
-        seed = random.randint(0, MAX_SEED)
-    return seed
-id_animator=load_model()
 import os
-basedir  = os.getcwd()
-savedir= os.path.join(basedir,'samples')
-os.makedirs(savedir, exist_ok=True)
 import os
 import cv2
 from diffusers.utils import load_image
 from insightface.utils import face_align
+from PIL import Image
+import numpy as np
+import argparse
+# From command line read command embman_ckpt_path
+parser = argparse.ArgumentParser()
+parser.add_argument('--embman_ckpt_path', type=str, 
+                    default='/data/shaohua/adaprompt/logs/subjects-celebrity2024-05-16T17-22-46_zero3-ada/checkpoints/embeddings_gs-30000.pt')
+args = parser.parse_args()
 
-print(f"### Cleaning cached examples ...")
-os.system(f"rm -rf gradio_cached_examples/")
+# model = load_model()
+app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+app.prepare(ctx_id=0, det_size=(320, 320))
 
+def swap_to_gallery(images):
+    return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(visible=False)
+
+def remove_back_to_files():
+    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)
+
+def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
+    if randomize_seed:
+        seed = random.randint(0, MAX_SEED)
+    return seed
+
+id_animator, ddpm = load_model(embman_ckpt_path=args.embman_ckpt_path)
+basedir     = os.getcwd()
+savedir     = os.path.join(basedir,'samples')
+os.makedirs(savedir, exist_ok=True)
+
+#print(f"### Cleaning cached examples ...")
+#os.system(f"rm -rf gradio_cached_examples/")
 
 @spaces.GPU
-def generate_image(image_container,upload_images, prompt, negative_prompt, num_steps, guidance_scale, seed, image_scale,video_length,progress=gr.Progress(track_tqdm=True)):
+def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_image_paths, prompt, negative_prompt, 
+                   num_steps, guidance_scale, seed, image_scale, adaface_scale,
+                   video_length, progress=gr.Progress(track_tqdm=True)):
     # check the trigger word
     # apply the style template
+
+    prompt = prompt + " 8k uhd, high quality"
+    if " shot" not in prompt:
+        prompt = prompt + ", medium shot"
+        
     prompt_img_lists=[]
-    for path in upload_images:
+    for path in uploaded_image_paths:
         img = cv2.imread(path)
         faces = app.get(img)
         face_roi = face_align.norm_crop(img,faces[0]['kps'],112)
         random_name = str(uuid.uuid4())
         face_path = os.path.join(savedir, f"{random_name}.jpg")
-        cv2.imwrite(face_path,face_roi)
+        cv2.imwrite(face_path, face_roi)
+        # prompt_img_lists is a list of PIL images.
         prompt_img_lists.append(load_image(face_path).resize((224,224)))
 
-    sample = id_animator.generate(prompt_img_lists, negative_prompt=negative_prompt+" long shots, full body",prompt=prompt+" 8k uhd, high quality, medium shot",num_inference_steps = num_steps,seed=seed,
-    guidance_scale      = guidance_scale,
-                width               = 512,
-                height              = 512,
-                video_length        = video_length,
-                scale=image_scale,
-    )
+    if ddpm is None or not enable_adaface:
+        adaface_embeds = None
+    else:
+        if embman_ckpt_path != args.embman_ckpt_path:
+            # Reload the embedding manager
+            ddpm.embedding_manager.load(embman_ckpt_path, load_old_embman_ckpt=False)
+            ddpm.embedding_manager.eval()
+            ddpm.embedding_manager.to("cuda")
+
+        ref_images = [ np.array(Image.open(ref_image_path)) for ref_image_path in uploaded_image_paths ]
+        zs_clip_features, zs_id_embs, _ = \
+            ddpm.encode_zero_shot_image_features(images=ref_images, fg_masks=None,
+                                                 image_paths=uploaded_image_paths,
+                                                 is_face=True, calc_avg=True, skip_non_faces=True)
+        # adaface_embeds: [16, 77, 768], 16 for 16 layers.
+        adaface_embeds, _, _ = \
+            ddpm.get_learned_conditioning([prompt], zs_clip_features=zs_clip_features,
+                                          zs_id_embs=zs_id_embs, 
+                                          zs_out_id_embs_scale=adaface_scale,
+                                          apply_arc2face_inverse_embs=False,
+                                          apply_arc2face_embs=False,
+                                          embman_iter_type='recon_iter')
+        adaface_embeds = adaface_embeds[[0]]
+
+    sample = id_animator.generate(prompt_img_lists, 
+                                  prompt = prompt,
+                                  negative_prompt = negative_prompt + " long shots, full body",
+                                  adaface_embeds  = adaface_embeds,
+                                  num_inference_steps = num_steps,seed=seed,
+                                  guidance_scale      = guidance_scale,
+                                  width               = 512,
+                                  height              = 512,
+                                  video_length        = video_length,
+                                  scale               = image_scale,
+                                )
+    
     save_sample_path = os.path.join(savedir, f"{random_name}.mp4")
     save_videos_grid(sample, save_sample_path)
     return save_sample_path
+
 def validate(prompt):
     if not prompt:
         raise gr.Error("Prompt cannot be blank")
+
 examples = [
     [
         "demo/ann.png",
@@ -122,7 +168,7 @@ with gr.Blocks(css=css) as demo:
     gr.Markdown(
         """
         # ID-Animator: Zero-Shot Identity-Preserving Human Video Generation
-        Xuanhua He, Quande Liu✉, Shengju Qian,Xin Wang, Tao Hu, Ke Cao, Keyu Yan, Man Zhou, Jie Zhang✉ (✉Corresponding Author)<br>
+        Xuanhua He, Quande Liu✉, Shengju Qian,Xin Wang, Tao Hu, Ke Cao, Keyu Yan, Jie Zhang✉ (✉Corresponding Author)<br>
         [Arxiv Report](https://arxiv.org/abs/2404.15275) | [Project Page](https://id-animator.github.io/) | [Github](https://github.com/ID-Animator/ID-Animator)
         """
     )
@@ -149,12 +195,19 @@ with gr.Blocks(css=css) as demo:
             prompt = gr.Textbox(label="Prompt",
                     #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
                        placeholder="Iron Man soars through the clouds, his repulsors blazing.")
+            adaface_scale = gr.Slider(
+                    label="AdaFace Scale",
+                    minimum=0,
+                    maximum=1,
+                    step=0.1,
+                    value=1,
+                )
             image_scale = gr.Slider(
                     label="Image Scale",
                     minimum=0,
                     maximum=1,
                     step=0.1,
-                    value=1,
+                    value=0.5,
                 )
 
             submit = gr.Button("Submit")
@@ -166,6 +219,13 @@ with gr.Blocks(css=css) as demo:
                     maximum=21,
                     step=1,
                     value=16,
+                )
+                enable_adaface = gr.Checkbox(label="Enable AdaFace", value=True)
+
+                embman_ckpt_path = gr.Textbox(
+                    label="Emb Manager CKPT Path", 
+                    placeholder=args.embman_ckpt_path,
+                    value=args.embman_ckpt_path,
                 )
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt", 
@@ -184,7 +244,7 @@ with gr.Blocks(css=css) as demo:
                     minimum=0.1,
                     maximum=10.0,
                     step=0.1,
-                    value=8,
+                    value=4,
                 )
                 seed = gr.Slider(
                     label="Seed",
@@ -208,9 +268,11 @@ with gr.Blocks(css=css) as demo:
             api_name=False,
         ).then(
             fn=generate_image,
-            inputs=[image_container,files, prompt, negative_prompt, num_steps, guidance_scale, seed,image_scale,video_length],
+            inputs=[image_container, enable_adaface, embman_ckpt_path, files, prompt, negative_prompt, num_steps, guidance_scale, seed, image_scale, adaface_scale, video_length],
             outputs=[result_video]
         )
-    gr.Examples( fn=generate_image, examples=examples, inputs=[image_container,files, prompt, negative_prompt, num_steps, guidance_scale, seed,image_scale,video_length], outputs=[result_video], cache_examples=True )
+    gr.Examples( fn=generate_image, examples=[], #examples, 
+                 inputs=[image_container, enable_adaface, embman_ckpt_path, files, prompt, negative_prompt, num_steps, guidance_scale, seed, image_scale, adaface_scale, video_length], 
+                 outputs=[result_video], cache_examples=True )
 
 demo.launch(share=True)

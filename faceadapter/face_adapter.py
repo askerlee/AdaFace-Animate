@@ -247,15 +247,16 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
         clip_image_embeds=None,
         prompt=None,
         negative_prompt=None,
+        adaface_embeds=None,
         scale=1.0,
         num_samples=1,
         seed=None,
-        guidance_scale=7.5,
+        guidance_scale=4,
         num_inference_steps=30,
         width=512,
         height=512,
         video_length=16,
-        image_scale=0,
+        image_scale=1,
         controlnet_images: torch.FloatTensor = None,
         controlnet_image_index: list = [0],
         **kwargs,
@@ -288,6 +289,9 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
         uncond_image_prompt_embeds = uncond_image_prompt_embeds.repeat(1, num_samples, 1)
         uncond_image_prompt_embeds = uncond_image_prompt_embeds.view(bs_embed * num_samples, seq_len, -1)
         with torch.inference_mode():
+            # if do_classifier_free_guidance,
+            # duplicate unconditional embeddings for each generation per prompt, using mps friendly method.
+            # https://github.com/huggingface/diffusers/blob/70f8d4b488f03730ae3bc11d4d707bafe153d10d/src/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py#L469
             prompt_embeds_, negative_prompt_embeds_ = self.pipe.encode_prompt(
                 prompt,
                 device=self.device,
@@ -295,6 +299,14 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
                 do_classifier_free_guidance=True,
                 negative_prompt=negative_prompt,
             )
+
+            if adaface_embeds is not None:
+                # self.torch_type == torch.float16. adaface_embeds is torch.float32.
+                prompt_embeds_ = adaface_embeds.repeat(num_samples, 1, 1).to(dtype=self.torch_type)
+                # Scale down ID-Animator's face embeddings, so that they don't dominate the generation.
+                image_prompt_embeds *= image_scale
+                # We still need uncond_image_prompt_embeds, otherwise the output is blank.
+
             prompt_embeds = torch.cat([prompt_embeds_, image_prompt_embeds], dim=1)
             negative_prompt_embeds = torch.cat([negative_prompt_embeds_, uncond_image_prompt_embeds], dim=1)
 

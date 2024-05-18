@@ -1,4 +1,4 @@
-from diffusers import AutoencoderKL, EulerAncestralDiscreteScheduler,DDIMScheduler
+from diffusers import AutoencoderKL, EulerAncestralDiscreteScheduler, DDIMScheduler, DPMSolverMultistepScheduler
 import torch
 from transformers import CLIPTextModel, CLIPTokenizer
 from animatediff.models.unet import UNet3DConditionModel
@@ -11,14 +11,34 @@ from faceadapter.face_adapter import FaceAdapterPlusForVideoLora
 from diffusers.utils import load_image
 from animatediff.utils.util import save_videos_grid
 from huggingface_hub import hf_hub_download
+from ldm.util import instantiate_from_config
 
-def load_model():
+def load_ddpm(unet_ckpt_path, embman_ckpt_path):
+    config = OmegaConf.load("/home/shaohua/adaprompt/configs/stable-diffusion/v1-inference-ada-empty.yaml")
+    config.model.params.personalization_config.params.token2num_vectors = { 'z': 16, 'y': 4 }
+    config.model.params.personalization_config.params.skip_loading_token2num_vectors = True
+
+    # We don't instantiate and load UNet weights, as they are not used.
+    # Doing so will reduce RAM usage greatly.
+    ddpm = instantiate_from_config(config.model)
+    ddpm.embedding_manager.load(embman_ckpt_path, load_old_embman_ckpt=False)
+    ddpm.embedding_manager.eval()
+
+    # cond_stage_model: ldm.modules.encoders.modules.FrozenCLIPEmbedder
+    ddpm.cond_stage_model.set_last_layers_skip_weights([0.5, 0.5])    
+    ddpm  = ddpm.to("cuda")
+    ddpm.cond_stage_model.device = "cuda"
+
+    return ddpm
+
+def load_model(embman_ckpt_path=None):
     inference_config = "inference-v2.yaml"
     sd_version = "animatediff/sd"
     id_ckpt = "animator.ckpt"
     image_encoder_path = "image_encoder"
     dreambooth_model_path = "realisticVisionV60B1_v51VAE.safetensors"
-    motion_module_path="mm_sd_v15_v2.ckpt"
+    motion_module_path="v3_sd15_mm.ckpt" #"mm_sd_v15_v2.ckpt"
+    motion_lora_path = "v3_sd15_adapter.ckpt"
     inference_config = OmegaConf.load(inference_config)    
 
 
@@ -35,6 +55,7 @@ def load_model():
             controlnet=None,
             #beta_start=0.00085, beta_end=0.012, beta_schedule="linear",steps_offset=1
             scheduler=DDIMScheduler(**OmegaConf.to_container(inference_config.noise_scheduler_kwargs)
+            # scheduler=DPMSolverMultistepScheduler(**OmegaConf.to_container(inference_config.DPMSolver_scheduler_kwargs)
             # scheduler=EulerAncestralDiscreteScheduler(**OmegaConf.to_container(inference_config.noise_scheduler_kwargs)
             # scheduler=EulerAncestralDiscreteScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="linear",steps_offset=1
 
@@ -47,7 +68,7 @@ def load_model():
             motion_module_path         = motion_module_path,
             motion_module_lora_configs = [],
             # domain adapter
-            adapter_lora_path          = "",
+            adapter_lora_path          = motion_lora_path,
             adapter_lora_scale         = 1,
             # image layers
             dreambooth_model_path      = None,
@@ -89,35 +110,11 @@ def load_model():
         del dreambooth_state_dict
         pipeline = pipeline.to(torch.float16)
         id_animator = FaceAdapterPlusForVideoLora(pipeline, image_encoder_path, id_ckpt, num_tokens=16,device=torch.device("cuda"),torch_type=torch.float16)
-        return id_animator
-if __name__ == "__main__":
-    from insightface.app import FaceAnalysis
-    app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-    app.prepare(ctx_id=0, det_size=(320, 320))
-    from insightface.utils import face_align
-    import cv2
-    from PIL import Image
-    animator = load_model()
-    random_seed  = 4993
-    prompt = "Iron Man soars through the clouds, his repulsors blazing"
-    negative_prompt="semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime, text, close up, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck"
-    
-    
-    
-    pil_image=[load_image("demos/lecun.png")]
-    img_path = "demos/lecun.png"
-    img = cv2.imread(img_path)
-    faces = app.get(img)
-    face_roi = face_align.norm_crop(img,faces[0]['kps'],112)
-    face_roi = cv2.cvtColor(face_roi, cv2.COLOR_BGR2RGB)
-    pil_image = [Image.fromarray(face_roi).resize((224, 224))]
-    sample = animator.generate(pil_image, negative_prompt=negative_prompt,prompt=prompt,num_inference_steps = 30,seed=random_seed,
-    guidance_scale      = 8,
-                width               = 512,
-                height              = 512,
-                video_length        = 16,
-                scale=0.8,
-    )
 
-    prompt = "-".join((prompt.replace("/", "").split(" ")[:10]))
-    save_videos_grid(sample, f"outputdir/{prompt}-{random_seed}.gif")
+        if embman_ckpt_path is not None:
+            ddpm = load_ddpm(dreambooth_model_path, embman_ckpt_path)
+        else:
+            ddpm = None
+
+        return id_animator, ddpm
+    
