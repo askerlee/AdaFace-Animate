@@ -10,8 +10,6 @@ arc2face/*
 arc2face/
 *.safetensors
 *.bin
-animatediff/*
-animatediff/
 image_encoder/*
 image_encoder/
 __assets__/*
