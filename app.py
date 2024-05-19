@@ -197,15 +197,15 @@ with gr.Blocks(css=css) as demo:
                        placeholder="Iron Man soars through the clouds, his repulsors blazing.")
             
             adaface_scale = gr.Slider(
-                    label="AdaFace Scale Min",
+                    label="AdaFace Embedding Scale",
                     minimum=0,
-                    maximum=4,
+                    maximum=8,
                     step=0.1,
                     value=2,
                 )
             
             image_scale = gr.Slider(
-                    label="Image Scale",
+                    label="Image Embedding Scale",
                     minimum=0,
                     maximum=1,
                     step=0.1,
