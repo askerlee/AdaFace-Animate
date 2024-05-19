@@ -304,7 +304,8 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
                 # self.torch_type == torch.float16. adaface_embeds is torch.float32.
                 prompt_embeds_ = adaface_embeds.repeat(num_samples, 1, 1).to(dtype=self.torch_type)
                 # Scale down ID-Animator's face embeddings, so that they don't dominate the generation.
-                image_prompt_embeds *= image_scale
+                # Note to balance image_prompt_embeds with uncond_image_prompt_embeds after scaling.
+                image_prompt_embeds = image_prompt_embeds * image_scale + uncond_image_prompt_embeds * (1 - image_scale)
                 # We still need uncond_image_prompt_embeds, otherwise the output is blank.
 
             prompt_embeds = torch.cat([prompt_embeds_, image_prompt_embeds], dim=1)
