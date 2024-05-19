@@ -49,7 +49,7 @@ os.makedirs(savedir, exist_ok=True)
 
 @spaces.GPU
 def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_image_paths, prompt, negative_prompt, 
-                   num_steps, guidance_scale, seed, image_scale, adaface_scale_min, adaface_scale_max,
+                   num_steps, guidance_scale, seed, image_scale, adaface_scale,
                    video_length, progress=gr.Progress(track_tqdm=True)):
     # check the trigger word
     # apply the style template
@@ -87,7 +87,7 @@ def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_i
         adaface_embeds, _, _ = \
             ddpm.get_learned_conditioning([prompt], zs_clip_features=zs_clip_features,
                                           zs_id_embs=zs_id_embs, 
-                                          zs_out_id_embs_scale_range=(adaface_scale_min, adaface_scale_max),
+                                          zs_out_id_embs_scale_range=(adaface_scale, adaface_scale),
                                           apply_arc2face_inverse_embs=False,
                                           apply_arc2face_embs=False,
                                           embman_iter_type='recon_iter')
@@ -196,20 +196,12 @@ with gr.Blocks(css=css) as demo:
                     #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
                        placeholder="Iron Man soars through the clouds, his repulsors blazing.")
             
-            adaface_scale_min = gr.Slider(
+            adaface_scale = gr.Slider(
                     label="AdaFace Scale Min",
                     minimum=0,
-                    maximum=2,
+                    maximum=4,
                     step=0.1,
-                    value=1,
-                )
-            
-            adaface_scale_max = gr.Slider(
-                    label="AdaFace Scale Max",
-                    minimum=0,
-                    maximum=2,
-                    step=0.1,
-                    value=1,
+                    value=2,
                 )
             
             image_scale = gr.Slider(
@@ -217,7 +209,7 @@ with gr.Blocks(css=css) as demo:
                     minimum=0,
                     maximum=1,
                     step=0.1,
-                    value=0.5,
+                    value=0.7,
                 )
 
             submit = gr.Button("Submit")
@@ -279,12 +271,12 @@ with gr.Blocks(css=css) as demo:
         ).then(
             fn=generate_image,
             inputs=[image_container, enable_adaface, embman_ckpt_path, files, prompt, negative_prompt, num_steps, guidance_scale, 
-                    seed, image_scale, adaface_scale_min, adaface_scale_max, video_length],
+                    seed, image_scale, adaface_scale, video_length],
             outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
                  inputs=[image_container, enable_adaface, embman_ckpt_path, files, prompt, negative_prompt, num_steps, guidance_scale, 
-                         seed, image_scale, adaface_scale_min, adaface_scale_max, video_length], 
+                         seed, image_scale, adaface_scale, video_length], 
                  outputs=[result_video], cache_examples=True )
 
 demo.launch(share=True)
