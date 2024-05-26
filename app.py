@@ -207,7 +207,7 @@ with gr.Blocks(css=css) as demo:
             image_scale = gr.Slider(
                     label="Image Embedding Scale",
                     minimum=0,
-                    maximum=1,
+                    maximum=2,
                     step=0.1,
                     value=0.7,
                 )

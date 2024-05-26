@@ -34,11 +34,12 @@ def load_ddpm(unet_ckpt_path, embman_ckpt_path):
 def load_model(embman_ckpt_path=None):
     inference_config = "inference-v2.yaml"
     sd_version = "animatediff/sd"
-    id_ckpt = "animator.ckpt"
+    id_ckpt = "models/animator.ckpt"
     image_encoder_path = "image_encoder"
-    dreambooth_model_path = "realisticVisionV60B1_v51VAE.safetensors"
-    motion_module_path="v3_sd15_mm.ckpt" #"mm_sd_v15_v2.ckpt"
-    motion_lora_path = "v3_sd15_adapter.ckpt"
+    #"models/realisticVisionV60B1_v51VAE.safetensors"
+    dreambooth_model_path = "models/realisticvision/realisticVisionV40_v40VAE.safetensors" 
+    motion_module_path="models/v3_sd15_mm.ckpt" #"mm_sd_v15_v2.ckpt"
+    motion_lora_path = "models/v3_sd15_adapter.ckpt"
     inference_config = OmegaConf.load(inference_config)    
 
 
