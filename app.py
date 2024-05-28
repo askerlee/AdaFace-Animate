@@ -225,14 +225,14 @@ with gr.Blocks(css=css) as demo:
                 enable_adaface = gr.Checkbox(label="Enable AdaFace", value=True)
 
                 embman_ckpt_path = gr.Textbox(
-                    label="Emb Manager CKPT Path", 
+                    label="AdaFace ckpt Path", 
                     placeholder=args.embman_ckpt_path,
                     value=args.embman_ckpt_path,
                 )
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt", 
                     placeholder="low quality",
-                    value="(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck, UnrealisticDream",
+                    value="(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, bare breasts, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, long neck, UnrealisticDream",
                 )
                 num_steps = gr.Slider( 
                     label="Number of sample steps",
