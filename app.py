@@ -49,7 +49,7 @@ os.makedirs(savedir, exist_ok=True)
 
 @spaces.GPU
 def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_image_paths, prompt, negative_prompt, 
-                   num_steps, guidance_scale, seed, image_scale, adaface_scale,
+                   num_steps, guidance_scale, seed, image_scale, adaface_scale, adaface_anneal_steps,
                    video_length, progress=gr.Progress(track_tqdm=True)):
     # check the trigger word
     # apply the style template
@@ -97,7 +97,9 @@ def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_i
                                   prompt = prompt,
                                   negative_prompt = negative_prompt + " long shots, full body",
                                   adaface_embeds  = adaface_embeds,
-                                  num_inference_steps = num_steps,seed=seed,
+                                  num_inference_steps = num_steps,
+                                  adaface_anneal_steps = adaface_anneal_steps,
+                                  seed=seed,
                                   guidance_scale      = guidance_scale,
                                   width               = 512,
                                   height              = 512,
@@ -223,7 +225,13 @@ with gr.Blocks(css=css) as demo:
                     value=16,
                 )
                 enable_adaface = gr.Checkbox(label="Enable AdaFace", value=True)
-
+                adaface_anneal_steps = gr.Slider(
+                    label="AdaFace Anneal Steps",
+                    minimum=0,
+                    maximum=3,
+                    step=1,
+                    value=0,
+                )
                 embman_ckpt_path = gr.Textbox(
                     label="AdaFace ckpt Path", 
                     placeholder=args.embman_ckpt_path,
@@ -271,12 +279,12 @@ with gr.Blocks(css=css) as demo:
         ).then(
             fn=generate_image,
             inputs=[image_container, enable_adaface, embman_ckpt_path, files, prompt, negative_prompt, num_steps, guidance_scale, 
-                    seed, image_scale, adaface_scale, video_length],
+                    seed, image_scale, adaface_scale, adaface_anneal_steps, video_length],
             outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
                  inputs=[image_container, enable_adaface, embman_ckpt_path, files, prompt, negative_prompt, num_steps, guidance_scale, 
-                         seed, image_scale, adaface_scale, video_length], 
+                         seed, image_scale, adaface_scale, adaface_anneal_steps, video_length], 
                  outputs=[result_video], cache_examples=True )
 
 demo.launch(share=True)

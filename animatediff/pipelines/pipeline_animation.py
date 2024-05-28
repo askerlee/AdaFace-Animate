@@ -439,6 +439,13 @@ class AnimationPipeline(DiffusionPipeline):
         height = height or self.unet.config.sample_size * self.vae_scale_factor
         width = width or self.unet.config.sample_size * self.vae_scale_factor
 
+        if isinstance(prompt_embeds, (list, tuple)):
+            prompt_embeds_begin, prompt_embeds_end, adaface_anneal_steps = prompt_embeds
+            prompt_embeds = prompt_embeds_begin
+            do_prompt_embeds_annealing = True
+        else:
+            do_prompt_embeds_annealing = False
+
         # Check inputs. Raise error if not correct
         self.check_inputs(prompt, height, width, callback_steps, prompt_embeds)
 
@@ -464,8 +471,12 @@ class AnimationPipeline(DiffusionPipeline):
             text_embeddings = self._encode_prompt(
                 prompt, device, num_videos_per_prompt, do_classifier_free_guidance, negative_prompt
             )
+        # If do_prompt_embeds_annealing is True, prompt_embeds and text_embeddings will be assigned in the loop below,
+        # and this is just to avoid type error.
+        # Otherwise, text_embeddings won't be replaced.
         else:
             text_embeddings = torch.cat([negative_prompt_embeds, prompt_embeds])
+
         # print(text_embeddings.shape)
         # return
         # Prepare timesteps
@@ -491,6 +502,10 @@ class AnimationPipeline(DiffusionPipeline):
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
 
         # Denoising loop
+        # num_warmup_steps = 0. num_inference_steps: 30.
+        # [958, 925, 892, 859, 826, 793, 760, 727, 694, 661, 628, 595, 562, 529,
+        #  496, 463, 430, 397, 364, 331, 298, 265, 232, 199, 166, 133, 100,  67,
+        #  34,   1]
         num_warmup_steps = len(timesteps) - num_inference_steps * self.scheduler.order
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
@@ -528,6 +543,14 @@ class AnimationPipeline(DiffusionPipeline):
                         conditioning_scale=controlnet_conditioning_scale,
                         guess_mode=False, return_dict=False,
                     )
+
+                if do_prompt_embeds_annealing:
+                    # i: 0 to num_inference_steps. Anneal the first adaface_anneal_steps steps.
+                    # If adaface_anneal_steps == 0, then anneal_factor is always 1.
+                    anneal_factor = i / adaface_anneal_steps if i < adaface_anneal_steps else 1
+                    prompt_embeds_annealed = prompt_embeds_begin + anneal_factor * (prompt_embeds_end - prompt_embeds_begin)
+                    text_embeddings = torch.cat([negative_prompt_embeds, prompt_embeds_annealed])
+
                 # predict the noise residual
                 noise_pred = self.unet(
                     latent_model_input, t, 

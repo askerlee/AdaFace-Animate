@@ -42,7 +42,6 @@ def load_model(embman_ckpt_path=None):
     motion_lora_path = "models/v3_sd15_adapter.ckpt"
     inference_config = OmegaConf.load(inference_config)    
 
-
     tokenizer    = CLIPTokenizer.from_pretrained(sd_version, subfolder="tokenizer",torch_dtype=torch.float16,
     )
     text_encoder = CLIPTextModel.from_pretrained(sd_version, subfolder="text_encoder",torch_dtype=torch.float16,
@@ -108,11 +107,14 @@ def load_model(embman_ckpt_path=None):
             pipeline.unet.load_state_dict(converted_unet_checkpoint, strict=False)
 
             pipeline.text_encoder = convert_ldm_clip_checkpoint(dreambooth_state_dict).to("cuda")
+            
         del dreambooth_state_dict
         pipeline = pipeline.to(torch.float16)
-        id_animator = FaceAdapterPlusForVideoLora(pipeline, image_encoder_path, id_ckpt, num_tokens=16,device=torch.device("cuda"),torch_type=torch.float16)
+        id_animator = FaceAdapterPlusForVideoLora(pipeline, image_encoder_path, id_ckpt, num_tokens=16,
+                                                  device=torch.device("cuda"), torch_type=torch.float16)
 
         if embman_ckpt_path is not None:
+            # dreambooth_model_path is not loaded.
             ddpm = load_ddpm(dreambooth_model_path, embman_ckpt_path)
         else:
             ddpm = None
