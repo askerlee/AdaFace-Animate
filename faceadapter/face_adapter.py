@@ -301,18 +301,19 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
                 negative_prompt=negative_prompt,
             )
 
-            prompt_embeds_begin = torch.cat([prompt_embeds_, image_prompt_embeds], dim=1)
             if adaface_embeds is not None:
+                prompt_embeds0_ = prompt_embeds_
                 # self.torch_type == torch.float16. adaface_embeds is torch.float32.
                 prompt_embeds_ = adaface_embeds.repeat(num_samples, 1, 1).to(dtype=self.torch_type)
                 # Scale down ID-Animator's face embeddings, so that they don't dominate the generation.
                 # Note to balance image_prompt_embeds with uncond_image_prompt_embeds after scaling.
                 image_prompt_embeds = image_prompt_embeds * image_scale + uncond_image_prompt_embeds * (1 - image_scale)
                 # We still need uncond_image_prompt_embeds, otherwise the output is blank.
-                prompt_embeds_end = torch.cat([prompt_embeds_, image_prompt_embeds], dim=1)
+                prompt_embeds_end   = torch.cat([prompt_embeds_,  image_prompt_embeds], dim=1)
+                prompt_embeds_begin = torch.cat([prompt_embeds0_, torch.zeros_like(image_prompt_embeds)], dim=1)
                 prompt_embeds = (prompt_embeds_begin, prompt_embeds_end, adaface_anneal_steps)
             else:
-                prompt_embeds = prompt_embeds_begin
+                prompt_embeds = torch.cat([prompt_embeds_, image_prompt_embeds], dim=1)
 
             # prompt_embeds = torch.cat([prompt_embeds_, image_prompt_embeds], dim=1)
             negative_prompt_embeds = torch.cat([negative_prompt_embeds_, uncond_image_prompt_embeds], dim=1)

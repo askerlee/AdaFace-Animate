@@ -228,7 +228,7 @@ with gr.Blocks(css=css) as demo:
                 adaface_anneal_steps = gr.Slider(
                     label="AdaFace Anneal Steps",
                     minimum=0,
-                    maximum=3,
+                    maximum=6,
                     step=1,
                     value=0,
                 )
