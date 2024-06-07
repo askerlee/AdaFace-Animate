@@ -39,7 +39,7 @@ def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         seed = random.randint(0, MAX_SEED)
     return seed
 
-id_animator, ddpm = load_model(embman_ckpt_path=args.embman_ckpt_path)
+id_animator, adaface = load_model(embman_ckpt_path=args.embman_ckpt_path)
 basedir     = os.getcwd()
 savedir     = os.path.join(basedir,'samples')
 os.makedirs(savedir, exist_ok=True)
@@ -69,34 +69,22 @@ def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_i
         # prompt_img_lists is a list of PIL images.
         prompt_img_lists.append(load_image(face_path).resize((224,224)))
 
-    if ddpm is None or not enable_adaface:
-        adaface_embeds = None
+    if adaface is None or not enable_adaface:
+        adaface_prompt_embeds = None
     else:
         if embman_ckpt_path != args.embman_ckpt_path:
             # Reload the embedding manager
-            ddpm.embedding_manager.load(embman_ckpt_path, load_old_embman_ckpt=False)
-            ddpm.embedding_manager.eval()
-            ddpm.embedding_manager.to("cuda")
+            adaface.load_subj_basis_generator(embman_ckpt_path)
 
-        ref_images = [ np.array(Image.open(ref_image_path)) for ref_image_path in uploaded_image_paths ]
-        zs_clip_features, zs_id_embs, _ = \
-            ddpm.encode_zero_shot_image_features(images=ref_images, fg_masks=None,
-                                                 image_paths=uploaded_image_paths,
-                                                 is_face=True, calc_avg=True, skip_non_faces=True)
-        # adaface_embeds: [16, 77, 768], 16 for 16 layers.
-        adaface_embeds, _, _ = \
-            ddpm.get_learned_conditioning([prompt], zs_clip_features=zs_clip_features,
-                                          zs_id_embs=zs_id_embs, 
-                                          zs_out_id_embs_scale_range=(adaface_scale, adaface_scale),
-                                          apply_arc2face_inverse_embs=False,
-                                          apply_arc2face_embs=False,
-                                          embman_iter_type='recon_iter')
-        adaface_embeds = adaface_embeds[[0]]
+        adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
+                                            update_text_encoder=True)
+        # adaface_prompt_embeds: [1, 77, 768].
+        adaface_prompt_embeds, _ = adaface.encode_prompt(prompt)
 
     sample = id_animator.generate(prompt_img_lists, 
                                   prompt = prompt,
                                   negative_prompt = negative_prompt + " long shots, full body",
-                                  adaface_embeds  = adaface_embeds,
+                                  adaface_embeds  = adaface_prompt_embeds,
                                   num_inference_steps = num_steps,
                                   adaface_anneal_steps = adaface_anneal_steps,
                                   seed=seed,
@@ -251,9 +239,9 @@ with gr.Blocks(css=css) as demo:
                 )
                 guidance_scale = gr.Slider(
                     label="Guidance scale",
-                    minimum=0.1,
+                    minimum=1.0,
                     maximum=10.0,
-                    step=0.1,
+                    step=0.5,
                     value=4,
                 )
                 seed = gr.Slider(

@@ -1,4 +1,4 @@
-from diffusers import AutoencoderKL, EulerAncestralDiscreteScheduler, DDIMScheduler, DPMSolverMultistepScheduler
+from diffusers import AutoencoderKL, DDIMScheduler
 import torch
 from transformers import CLIPTextModel, CLIPTokenizer
 from animatediff.models.unet import UNet3DConditionModel
@@ -8,28 +8,13 @@ from animatediff.utils.util import load_weights
 from safetensors import safe_open
 from animatediff.utils.convert_from_ckpt import convert_ldm_unet_checkpoint, convert_ldm_clip_checkpoint, convert_ldm_vae_checkpoint
 from faceadapter.face_adapter import FaceAdapterPlusForVideoLora
-from diffusers.utils import load_image
-from animatediff.utils.util import save_videos_grid
-from huggingface_hub import hf_hub_download
-from ldm.util import instantiate_from_config
+from adaface.adaface_wrapper import AdaFaceWrapper
 
-def load_ddpm(unet_ckpt_path, embman_ckpt_path):
-    config = OmegaConf.load("/home/shaohua/adaprompt/configs/stable-diffusion/v1-inference-ada-empty.yaml")
-    config.model.params.personalization_config.params.token2num_vectors = { 'z': 16, 'y': 4 }
-    config.model.params.personalization_config.params.skip_loading_token2num_vectors = True
-
-    # We don't instantiate and load UNet weights, as they are not used.
-    # Doing so will reduce RAM usage greatly.
-    ddpm = instantiate_from_config(config.model)
-    ddpm.embedding_manager.load(embman_ckpt_path, load_old_embman_ckpt=False)
-    ddpm.embedding_manager.eval()
-
-    # cond_stage_model: ldm.modules.encoders.modules.FrozenCLIPEmbedder
-    ddpm.cond_stage_model.set_last_layers_skip_weights([0.5, 0.5])    
-    ddpm  = ddpm.to("cuda")
-    ddpm.cond_stage_model.device = "cuda"
-
-    return ddpm
+def load_adaface(base_model_path, embman_ckpt_path, device="cuda"):
+    # base_model_path is only used for initialization, not really used in the inference.
+    adaface = AdaFaceWrapper(pipeline_name=None, base_model_path=base_model_path,
+                             embman_ckpt_path=embman_ckpt_path, device=device)
+    return adaface
 
 def load_model(embman_ckpt_path=None):
     inference_config = "inference-v2.yaml"
@@ -115,9 +100,9 @@ def load_model(embman_ckpt_path=None):
 
         if embman_ckpt_path is not None:
             # dreambooth_model_path is not loaded.
-            ddpm = load_ddpm(dreambooth_model_path, embman_ckpt_path)
+            adaface = load_adaface(dreambooth_model_path, embman_ckpt_path)
         else:
-            ddpm = None
+            adaface = None
 
-        return id_animator, ddpm
+        return id_animator, adaface
     
