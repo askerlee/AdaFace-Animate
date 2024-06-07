@@ -15,7 +15,7 @@ wandb==0.15.12
 yapf==0.40.2
 insightface==0.7.3
 omegaconf==2.3.0
-onnx==1.15.0
+onnx>=1.16.0
 onnxruntime
 opencv-python==4.9.0.80
 diffusers
