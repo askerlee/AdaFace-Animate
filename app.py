@@ -48,9 +48,10 @@ os.makedirs(savedir, exist_ok=True)
 #os.system(f"rm -rf gradio_cached_examples/")
 
 @spaces.GPU
-def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_image_paths, prompt, negative_prompt, 
-                   num_steps, guidance_scale, seed, image_scale, adaface_scale, adaface_anneal_steps,
-                   video_length, progress=gr.Progress(track_tqdm=True)):
+def generate_image(image_container, uploaded_image_paths, prompt, negative_prompt, 
+                   num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
+                   is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps,
+                   progress=gr.Progress(track_tqdm=True)):
     # check the trigger word
     # apply the style template
 
@@ -69,7 +70,7 @@ def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_i
         # prompt_img_lists is a list of PIL images.
         prompt_img_lists.append(load_image(face_path).resize((224,224)))
 
-    if adaface is None or not enable_adaface:
+    if adaface is None or not is_adaface_enabled:
         adaface_prompt_embeds = None
     else:
         if embman_ckpt_path != args.embman_ckpt_path:
@@ -77,14 +78,19 @@ def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_i
             adaface.load_subj_basis_generator(embman_ckpt_path)
 
         adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
+                                            out_id_embs_scale=adaface_scale,
                                             update_text_encoder=True)
         # adaface_prompt_embeds: [1, 77, 768].
         adaface_prompt_embeds, _ = adaface.encode_prompt(prompt)
 
     sample = id_animator.generate(prompt_img_lists, 
+                                  init_image      = None, #init_image,
                                   prompt = prompt,
                                   negative_prompt = negative_prompt + " long shots, full body",
                                   adaface_embeds  = adaface_prompt_embeds,
+                                  # This adaface_scale is not so useful, and when it's set >= 2, weird artifacts appear. So we disable it,
+                                  # and apply adaface_scale in the generate_adaface_embeddings() function.
+                                  adaface_scale   = 1,
                                   num_inference_steps = num_steps,
                                   adaface_anneal_steps = adaface_anneal_steps,
                                   seed=seed,
@@ -92,7 +98,8 @@ def generate_image(image_container, enable_adaface, embman_ckpt_path, uploaded_i
                                   width               = 512,
                                   height              = 512,
                                   video_length        = video_length,
-                                  scale               = image_scale,
+                                  attn_scale          = attn_scale,
+                                  image_embed_scale   = image_embed_scale,
                                 )
     
     save_sample_path = os.path.join(savedir, f"{random_name}.mp4")
@@ -185,23 +192,29 @@ with gr.Blocks(css=css) as demo:
             prompt = gr.Textbox(label="Prompt",
                     #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
                        placeholder="Iron Man soars through the clouds, his repulsors blazing.")
-            
-            adaface_scale = gr.Slider(
-                    label="AdaFace Embedding Scale",
+           
+            attn_scale = gr.Slider(
+                    label="Attention Processor Scale",
                     minimum=0,
-                    maximum=8,
+                    maximum=2,
                     step=0.1,
-                    value=2,
+                    value=1,
                 )
-            
-            image_scale = gr.Slider(
+            image_embed_scale = gr.Slider(
                     label="Image Embedding Scale",
                     minimum=0,
                     maximum=2,
                     step=0.1,
-                    value=0.7,
+                    value=0.5,
                 )
-
+            adaface_scale = gr.Slider(
+                    label="AdaFace Embedding Scale",
+                    minimum=0,
+                    maximum=4,
+                    step=0.1,
+                    value=1,
+                )
+             
             submit = gr.Button("Submit")
 
             with gr.Accordion(open=False, label="Advanced Options"):
@@ -212,7 +225,7 @@ with gr.Blocks(css=css) as demo:
                     step=1,
                     value=16,
                 )
-                enable_adaface = gr.Checkbox(label="Enable AdaFace", value=True)
+                is_adaface_enabled = gr.Checkbox(label="Enable AdaFace", value=True)
                 adaface_anneal_steps = gr.Slider(
                     label="AdaFace Anneal Steps",
                     minimum=0,
@@ -265,14 +278,14 @@ with gr.Blocks(css=css) as demo:
             queue=False,
             api_name=False,
         ).then(
-            fn=generate_image,
-            inputs=[image_container, enable_adaface, embman_ckpt_path, files, prompt, negative_prompt, num_steps, guidance_scale, 
-                    seed, image_scale, adaface_scale, adaface_anneal_steps, video_length],
-            outputs=[result_video]
+                 fn=generate_image,
+                 inputs=[image_container, files, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
+                         seed, attn_scale, image_embed_scale, is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps],
+                 outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
-                 inputs=[image_container, enable_adaface, embman_ckpt_path, files, prompt, negative_prompt, num_steps, guidance_scale, 
-                         seed, image_scale, adaface_scale, adaface_anneal_steps, video_length], 
+                 inputs=[image_container, files, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
+                         seed, attn_scale, image_embed_scale, is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps], 
                  outputs=[result_video], cache_examples=True )
 
 demo.launch(share=True)

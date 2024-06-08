@@ -143,10 +143,10 @@ class FaceAdapterLora:
         uncond_image_prompt_embeds = self.image_proj_model(torch.zeros_like(clip_image_embeds))
         return image_prompt_embeds, uncond_image_prompt_embeds
 
-    def set_scale(self, scale):
+    def set_attn_scale(self, attn_scale):
         for attn_processor in self.pipe.unet.attn_processors.values():
             if isinstance(attn_processor, LoRAFaceAttnProcessor):
-                attn_processor.scale = scale
+                attn_processor.scale = attn_scale
 
     def generate(
         self,
@@ -154,14 +154,14 @@ class FaceAdapterLora:
         clip_image_embeds=None,
         prompt=None,
         negative_prompt=None,
-        scale=1,
+        attn_scale=1,
         num_samples=4,
         seed=None,
         guidance_scale=7.5,
         num_inference_steps=30,
         **kwargs,
     ):
-        self.set_scale(scale)
+        self.set_attn_scale(attn_scale)
 
         if pil_image is not None:
             num_prompts = 1 if isinstance(pil_image, Image.Image) else len(pil_image)
@@ -243,12 +243,13 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
     def generate(
         self,
         pil_image=None,
-        pil_image2=None,
+        init_image=None,
         clip_image_embeds=None,
         prompt=None,
         negative_prompt=None,
         adaface_embeds=None,
-        scale=1.0,
+        adaface_scale=1.0,
+        attn_scale=1.0,
         num_samples=1,
         seed=None,
         guidance_scale=4,
@@ -257,12 +258,12 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
         width=512,
         height=512,
         video_length=16,
-        image_scale=1,
+        image_embed_scale=1,
         controlnet_images: torch.FloatTensor = None,
         controlnet_image_index: list = [0],
         **kwargs,
     ):
-        self.set_scale(scale)
+        self.set_attn_scale(attn_scale)
         num_prompts=1
 
         if prompt is None:
@@ -304,10 +305,10 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
             if adaface_embeds is not None:
                 prompt_embeds0_ = prompt_embeds_
                 # self.torch_type == torch.float16. adaface_embeds is torch.float32.
-                prompt_embeds_ = adaface_embeds.repeat(num_samples, 1, 1).to(dtype=self.torch_type)
+                prompt_embeds_ = adaface_embeds.repeat(num_samples, 1, 1).to(dtype=self.torch_type) * adaface_scale
                 # Scale down ID-Animator's face embeddings, so that they don't dominate the generation.
                 # Note to balance image_prompt_embeds with uncond_image_prompt_embeds after scaling.
-                image_prompt_embeds = image_prompt_embeds * image_scale + uncond_image_prompt_embeds * (1 - image_scale)
+                image_prompt_embeds = image_prompt_embeds * image_embed_scale + uncond_image_prompt_embeds * (1 - image_embed_scale)
                 # We still need uncond_image_prompt_embeds, otherwise the output is blank.
                 prompt_embeds_end   = torch.cat([prompt_embeds_,  image_prompt_embeds], dim=1)
                 prompt_embeds_begin = torch.cat([prompt_embeds0_, torch.zeros_like(image_prompt_embeds)], dim=1)
@@ -321,6 +322,7 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
         generator = get_generator(seed, self.device)
 
         video = self.pipe(
+            init_image=init_image,
             prompt = "",
             prompt_embeds = prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,
@@ -343,7 +345,7 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
         clip_image_embeds=None,
         prompt=None,
         negative_prompt=None,
-        scale=1.0,
+        attn_scale=1.0,
         num_samples=1,
         seed=None,
         guidance_scale=7.5,
@@ -354,7 +356,7 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
         video_latents=None,
         **kwargs,
     ):
-        self.set_scale(scale)
+        self.set_attn_scale(attn_scale)
 
         if pil_image is not None:
             num_prompts = 1 if isinstance(pil_image, Image.Image) else len(pil_image)
