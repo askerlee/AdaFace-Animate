@@ -193,19 +193,19 @@ with gr.Blocks(css=css) as demo:
                     #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
                        placeholder="Iron Man soars through the clouds, his repulsors blazing.")
            
-            attn_scale = gr.Slider(
-                    label="Attention Processor Scale",
-                    minimum=0,
-                    maximum=2,
-                    step=0.1,
-                    value=1,
-                )
             image_embed_scale = gr.Slider(
                     label="Image Embedding Scale",
                     minimum=0,
                     maximum=2,
                     step=0.1,
                     value=0.5,
+                )
+            attn_scale = gr.Slider(
+                    label="Attention Processor Scale",
+                    minimum=0,
+                    maximum=2,
+                    step=0.1,
+                    value=1,
                 )
             adaface_scale = gr.Slider(
                     label="AdaFace Embedding Scale",
