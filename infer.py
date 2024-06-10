@@ -45,7 +45,7 @@ def load_model(embman_ckpt_path=None, device="cuda:0"):
             # scheduler=EulerAncestralDiscreteScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="linear",steps_offset=1
 
     ),torch_dtype=torch.float16,
-            ).to("cuda")
+            ).to(device=device)
     
     pipeline = load_weights(
             pipeline,
@@ -59,7 +59,7 @@ def load_model(embman_ckpt_path=None, device="cuda:0"):
             dreambooth_model_path      = None,
             lora_model_path            = "",
             lora_alpha                 = 0.8
-    ).to("cuda")
+    ).to(device=device)
     if dreambooth_model_path != "":
         print(f"load dreambooth model from {dreambooth_model_path}")
         dreambooth_state_dict = {}
@@ -91,12 +91,12 @@ def load_model(embman_ckpt_path=None, device="cuda:0"):
             converted_unet_checkpoint = convert_ldm_unet_checkpoint(dreambooth_state_dict, pipeline.unet.config)
             pipeline.unet.load_state_dict(converted_unet_checkpoint, strict=False)
 
-            pipeline.text_encoder = convert_ldm_clip_checkpoint(dreambooth_state_dict).to("cuda")
+            pipeline.text_encoder = convert_ldm_clip_checkpoint(dreambooth_state_dict).to(device=device)
             
         del dreambooth_state_dict
         pipeline = pipeline.to(torch.float16)
         id_animator = FaceAdapterPlusForVideoLora(pipeline, image_encoder_path, id_ckpt, num_tokens=16,
-                                                  device=torch.device("cuda"), torch_type=torch.float16)
+                                                  device=torch.device(device), torch_type=torch.float16)
 
         if embman_ckpt_path is not None:
             # dreambooth_model_path is not loaded.
