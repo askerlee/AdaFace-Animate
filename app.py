@@ -22,6 +22,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--embman_ckpt_path', type=str, 
                     default='/data/shaohua/adaprompt/logs/subjects-celebrity2024-05-16T17-22-46_zero3-ada/checkpoints/embeddings_gs-30000.pt')
+parser.add_argument('--gpu', type=int, default=0)
 args = parser.parse_args()
 
 def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
@@ -33,7 +34,7 @@ def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
 # This FaceAnalysis uses a different model from what AdaFace uses, but it's fine.
 # This is just to crop the face areas from the uploaded images.
 app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-app.prepare(ctx_id=0, det_size=(320, 320))
+app.prepare(ctx_id=args.gpu, det_size=(320, 320))
 
 id_animator, adaface = load_model(embman_ckpt_path=args.embman_ckpt_path)
 basedir     = os.getcwd()
@@ -81,9 +82,6 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_path, pr
                    num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
                    is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_anneal_steps,
                    progress=gr.Progress(track_tqdm=True)):
-    # check the trigger word
-    # apply the style template
-
     prompt = prompt + " 8k uhd, high quality"
     if " shot" not in prompt:
         prompt = prompt + ", medium shot"

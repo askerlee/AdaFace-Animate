@@ -16,7 +16,7 @@ def load_adaface(base_model_path, embman_ckpt_path, device="cuda"):
                              embman_ckpt_path=embman_ckpt_path, device=device)
     return adaface
 
-def load_model(embman_ckpt_path=None):
+def load_model(embman_ckpt_path=None, device="cuda:0"):
     inference_config = "inference-v2.yaml"
     sd_version = "animatediff/sd"
     id_ckpt = "models/animator.ckpt"
@@ -30,11 +30,11 @@ def load_model(embman_ckpt_path=None):
     tokenizer    = CLIPTokenizer.from_pretrained(sd_version, subfolder="tokenizer",torch_dtype=torch.float16,
     )
     text_encoder = CLIPTextModel.from_pretrained(sd_version, subfolder="text_encoder",torch_dtype=torch.float16,
-    ).cuda()
+    ).to(device=device)
     vae          = AutoencoderKL.from_pretrained(sd_version, subfolder="vae",torch_dtype=torch.float16,
-    ).cuda()
+    ).to(device=device)
     unet = UNet3DConditionModel.from_pretrained_2d(sd_version, subfolder="unet", unet_additional_kwargs=OmegaConf.to_container(inference_config.unet_additional_kwargs)
-    ).cuda()
+    ).to(device=device)
     pipeline = AnimationPipeline(
             vae=vae, text_encoder=text_encoder, tokenizer=tokenizer, unet=unet,
             controlnet=None,
@@ -100,7 +100,7 @@ def load_model(embman_ckpt_path=None):
 
         if embman_ckpt_path is not None:
             # dreambooth_model_path is not loaded.
-            adaface = load_adaface(dreambooth_model_path, embman_ckpt_path)
+            adaface = load_adaface(dreambooth_model_path, embman_ckpt_path, device)
         else:
             adaface = None
 
