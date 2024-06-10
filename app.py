@@ -36,7 +36,7 @@ def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
 app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 app.prepare(ctx_id=args.gpu, det_size=(320, 320))
 
-id_animator, adaface = load_model(embman_ckpt_path=args.embman_ckpt_path)
+id_animator, adaface = load_model(embman_ckpt_path=args.embman_ckpt_path, device=f"cuda:{args.gpu}")
 basedir     = os.getcwd()
 savedir     = os.path.join(basedir,'samples')
 os.makedirs(savedir, exist_ok=True)
