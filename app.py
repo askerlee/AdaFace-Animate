@@ -48,7 +48,7 @@ os.makedirs(savedir, exist_ok=True)
 #os.system(f"rm -rf gradio_cached_examples/")
 
 @spaces.GPU
-def generate_image(image_container, uploaded_image_paths, prompt, negative_prompt, 
+def generate_image(image_container, uploaded_image_paths, init_img_file_path, prompt, negative_prompt, 
                    num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
                    is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps,
                    progress=gr.Progress(track_tqdm=True)):
@@ -78,13 +78,21 @@ def generate_image(image_container, uploaded_image_paths, prompt, negative_promp
             adaface.load_subj_basis_generator(embman_ckpt_path)
 
         adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
-                                            out_id_embs_scale=adaface_scale,
-                                            update_text_encoder=True)
+                                            out_id_embs_scale=adaface_scale, update_text_encoder=True)
         # adaface_prompt_embeds: [1, 77, 768].
         adaface_prompt_embeds, _ = adaface.encode_prompt(prompt)
 
+    # init_img_file_path is a list of image paths. If not chose, init_img_file_path is None.
+    if init_img_file_path is not None:
+        init_img_file_path = init_img_file_path[0]
+        init_image = cv2.imread(init_img_file_path)
+        init_image = cv2.resize(init_image, (512, 512))
+        init_image = Image.fromarray(cv2.cvtColor(init_image, cv2.COLOR_BGR2RGB))
+    else:
+        init_image = None
+
     sample = id_animator.generate(prompt_img_lists, 
-                                  init_image      = None, #init_image,
+                                  init_image      = init_image,
                                   prompt = prompt,
                                   negative_prompt = negative_prompt + " long shots, full body",
                                   adaface_embeds  = adaface_prompt_embeds,
@@ -189,6 +197,17 @@ with gr.Blocks(css=css) as demo:
             uploaded_files = gr.Gallery(label="Your images", visible=False, columns=5, rows=1, height=200)
             with gr.Column(visible=False) as clear_button:
                 remove_and_reupload = gr.ClearButton(value="Remove and upload new ones", components=files, size="sm")
+
+            init_img_file = gr.File(
+                            label="Drag (Select) 1 image for initialization",
+                            file_types=["image"],
+                            file_count="multiple"
+                    )
+            init_img_container = gr.Image(label="init image container", sources="upload", type="numpy", height=256, visible=False)
+            uploaded_init_img = gr.Gallery(label="Init image", visible=False, columns=1, rows=1, height=200)
+            with gr.Column(visible=False) as init_clear_button:
+                remove_init_and_reupload = gr.ClearButton(value="Remove and upload new init image", components=init_img_file, size="sm")
+
             prompt = gr.Textbox(label="Prompt",
                     #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
                        placeholder="Iron Man soars through the clouds, his repulsors blazing.")
@@ -268,8 +287,12 @@ with gr.Blocks(css=css) as demo:
         with gr.Column():
             result_video = gr.Video(label="Generated Animation", interactive=False)
         
-        files.upload(fn=swap_to_gallery, inputs=files, outputs=[uploaded_files, clear_button, files])
+        files.upload(fn=swap_to_gallery, inputs=files,     outputs=[uploaded_files, clear_button, files])
         remove_and_reupload.click(fn=remove_back_to_files, outputs=[uploaded_files, clear_button, files])
+
+        init_img_file.upload(fn=swap_to_gallery, inputs=init_img_file, outputs=[uploaded_init_img, init_clear_button, init_img_file])
+        remove_init_and_reupload.click(fn=remove_back_to_files,        outputs=[uploaded_init_img, init_clear_button, init_img_file])
+
         submit.click(fn=validate,
                      inputs=[prompt],outputs=None).success(
             fn=randomize_seed_fn,
@@ -279,12 +302,12 @@ with gr.Blocks(css=css) as demo:
             api_name=False,
         ).then(
                  fn=generate_image,
-                 inputs=[image_container, files, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
+                 inputs=[image_container, files, init_img_file, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps],
                  outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
-                 inputs=[image_container, files, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
+                 inputs=[image_container, files, init_img_file, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps], 
                  outputs=[result_video], cache_examples=True )
 
