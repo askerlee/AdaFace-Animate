@@ -60,7 +60,7 @@ def remove_back_to_files():
 def gen_init_image(uploaded_image_paths, prompt):
     if uploaded_image_paths is None:
         print("No image uploaded")
-        return None, None
+        return None, None, None
     # uploaded_image_paths is a list of tuples:
     # [('/tmp/gradio/249981e66a7c665aaaf1c7eaeb24949af4366c88/jensen huang.jpg', None)]
     # Extract the file paths.
