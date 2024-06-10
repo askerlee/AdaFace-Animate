@@ -16,7 +16,7 @@ import cv2
 from diffusers.utils import load_image
 from insightface.utils import face_align
 from PIL import Image
-import numpy as np
+import torch
 import argparse
 # From command line read command embman_ckpt_path
 parser = argparse.ArgumentParser()
@@ -24,20 +24,16 @@ parser.add_argument('--embman_ckpt_path', type=str,
                     default='/data/shaohua/adaprompt/logs/subjects-celebrity2024-05-16T17-22-46_zero3-ada/checkpoints/embeddings_gs-30000.pt')
 args = parser.parse_args()
 
-# model = load_model()
-app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-app.prepare(ctx_id=0, det_size=(320, 320))
-
-def swap_to_gallery(images):
-    return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(visible=False)
-
-def remove_back_to_files():
-    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)
-
 def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
     if randomize_seed:
         seed = random.randint(0, MAX_SEED)
     return seed
+
+# model = load_model()
+# This FaceAnalysis uses a different model from what AdaFace uses, but it's fine.
+# This is just to crop the face areas from the uploaded images.
+app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+app.prepare(ctx_id=0, det_size=(320, 320))
 
 id_animator, adaface = load_model(embman_ckpt_path=args.embman_ckpt_path)
 basedir     = os.getcwd()
@@ -47,10 +43,43 @@ os.makedirs(savedir, exist_ok=True)
 #print(f"### Cleaning cached examples ...")
 #os.system(f"rm -rf gradio_cached_examples/")
 
+def swap_to_gallery(images):
+    # Update uploaded_files_gallery, show files, hide clear_button_column
+    # Or:
+    # Update uploaded_init_img_gallery, show init_img_file, hide init_clear_button_column
+    return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(visible=False)
+
+def remove_back_to_files():
+    # Hide uploaded_files_gallery, hide files, show clear_button_column
+    # Or:
+    # Hide uploaded_init_img_gallery, show init_img_file, hide init_clear_button_column
+    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)
+
+@spaces.GPU
+def gen_init_image(uploaded_image_paths, prompt):
+    if uploaded_image_paths is None:
+        print("No image uploaded")
+        return None, None
+    # uploaded_image_paths is a list of tuples:
+    # [('/tmp/gradio/249981e66a7c665aaaf1c7eaeb24949af4366c88/jensen huang.jpg', None)]
+    # Extract the file paths.
+    uploaded_image_paths = [path[0] for path in uploaded_image_paths]
+    adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
+                                        out_id_embs_scale=1, update_text_encoder=True)
+    noise = torch.randn(1, 3, 512, 512)
+    # sample: A PIL Image instance.
+    sample = adaface(noise, prompt, out_image_count=1, verbose=True)[0]
+    random_name = str(uuid.uuid4())
+    face_path = os.path.join(savedir, f"{random_name}.jpg")
+    sample.save(face_path)
+    print(f"Generated init image: {face_path}")
+    # Update uploaded_init_img_gallery, update and show init_img_file, hide init_clear_button_column
+    return gr.update(value=[face_path], visible=True), gr.update(value=[face_path], visible=False), gr.update(visible=True)
+
 @spaces.GPU
 def generate_image(image_container, uploaded_image_paths, init_img_file_path, prompt, negative_prompt, 
                    num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
-                   is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps,
+                   is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_anneal_steps,
                    progress=gr.Progress(track_tqdm=True)):
     # check the trigger word
     # apply the style template
@@ -63,7 +92,7 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_path, pr
     for path in uploaded_image_paths:
         img = cv2.imread(path)
         faces = app.get(img)
-        face_roi = face_align.norm_crop(img,faces[0]['kps'],112)
+        face_roi = face_align.norm_crop(img, faces[0]['kps'], 112)
         random_name = str(uuid.uuid4())
         face_path = os.path.join(savedir, f"{random_name}.jpg")
         cv2.imwrite(face_path, face_roi)
@@ -78,7 +107,7 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_path, pr
             adaface.load_subj_basis_generator(embman_ckpt_path)
 
         adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
-                                            out_id_embs_scale=adaface_scale, update_text_encoder=True)
+                                            out_id_embs_scale=adaface_id_cfg_scale, update_text_encoder=True)
         # adaface_prompt_embeds: [1, 77, 768].
         adaface_prompt_embeds, _ = adaface.encode_prompt(prompt)
 
@@ -88,6 +117,7 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_path, pr
         init_image = cv2.imread(init_img_file_path)
         init_image = cv2.resize(init_image, (512, 512))
         init_image = Image.fromarray(cv2.cvtColor(init_image, cv2.COLOR_BGR2RGB))
+        print(f"init_image: {init_img_file_path}")
     else:
         init_image = None
 
@@ -98,7 +128,7 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_path, pr
                                   adaface_embeds  = adaface_prompt_embeds,
                                   # This adaface_scale is not so useful, and when it's set >= 2, weird artifacts appear. So we disable it,
                                   # and apply adaface_scale in the generate_adaface_embeddings() function.
-                                  adaface_scale   = 1,
+                                  adaface_scale       = 1,
                                   num_inference_steps = num_steps,
                                   adaface_anneal_steps = adaface_anneal_steps,
                                   seed=seed,
@@ -193,9 +223,9 @@ with gr.Blocks(css=css) as demo:
                         file_types=["image"],
                         file_count="multiple"
                     )
-            image_container = gr.Image(label="image container", sources="upload", type="numpy", height=256,visible=False)
-            uploaded_files = gr.Gallery(label="Your images", visible=False, columns=5, rows=1, height=200)
-            with gr.Column(visible=False) as clear_button:
+            image_container = gr.Image(label="image container", sources="upload", type="numpy", height=256, visible=False)
+            uploaded_files_gallery = gr.Gallery(label="Your images", visible=False, columns=5, rows=1, height=200)
+            with gr.Column(visible=False) as clear_button_column:
                 remove_and_reupload = gr.ClearButton(value="Remove and upload new ones", components=files, size="sm")
 
             init_img_file = gr.File(
@@ -204,9 +234,13 @@ with gr.Blocks(css=css) as demo:
                             file_count="multiple"
                     )
             init_img_container = gr.Image(label="init image container", sources="upload", type="numpy", height=256, visible=False)
-            uploaded_init_img = gr.Gallery(label="Init image", visible=False, columns=1, rows=1, height=200)
-            with gr.Column(visible=False) as init_clear_button:
+            # Although there's only one image, we still use columns=3, to scale down the image size.
+            # Otherwise it will occupy the full width, and the gallery won't show the whole image.
+            uploaded_init_img_gallery = gr.Gallery(label="Init image", visible=False, columns=3, rows=1, height=200)
+            with gr.Column(visible=False) as init_clear_button_column:
                 remove_init_and_reupload = gr.ClearButton(value="Remove and upload new init image", components=init_img_file, size="sm")
+            with gr.Column(visible=True) as init_gen_button_column:
+                gen_init = gr.Button(value="Generate a new init image")
 
             prompt = gr.Textbox(label="Prompt",
                     #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
@@ -217,7 +251,7 @@ with gr.Blocks(css=css) as demo:
                     minimum=0,
                     maximum=2,
                     step=0.1,
-                    value=0.5,
+                    value=0.8,
                 )
             attn_scale = gr.Slider(
                     label="Attention Processor Scale",
@@ -226,7 +260,7 @@ with gr.Blocks(css=css) as demo:
                     step=0.1,
                     value=1,
                 )
-            adaface_scale = gr.Slider(
+            adaface_id_cfg_scale = gr.Slider(
                     label="AdaFace Embedding Scale",
                     minimum=0,
                     maximum=4,
@@ -287,11 +321,13 @@ with gr.Blocks(css=css) as demo:
         with gr.Column():
             result_video = gr.Video(label="Generated Animation", interactive=False)
         
-        files.upload(fn=swap_to_gallery, inputs=files,     outputs=[uploaded_files, clear_button, files])
-        remove_and_reupload.click(fn=remove_back_to_files, outputs=[uploaded_files, clear_button, files])
+        files.upload(fn=swap_to_gallery, inputs=files,     outputs=[uploaded_files_gallery, clear_button_column, files])
+        remove_and_reupload.click(fn=remove_back_to_files, outputs=[uploaded_files_gallery, clear_button_column, files])
 
-        init_img_file.upload(fn=swap_to_gallery, inputs=init_img_file, outputs=[uploaded_init_img, init_clear_button, init_img_file])
-        remove_init_and_reupload.click(fn=remove_back_to_files,        outputs=[uploaded_init_img, init_clear_button, init_img_file])
+        init_img_file.upload(fn=swap_to_gallery, inputs=init_img_file, outputs=[uploaded_init_img_gallery, init_clear_button_column, init_img_file])
+        remove_init_and_reupload.click(fn=remove_back_to_files,        outputs=[uploaded_init_img_gallery, init_clear_button_column, init_img_file])
+        gen_init.click(fn=gen_init_image, inputs=[uploaded_files_gallery, prompt], 
+                       outputs=[uploaded_init_img_gallery, init_img_file, init_clear_button_column])
 
         submit.click(fn=validate,
                      inputs=[prompt],outputs=None).success(
@@ -303,12 +339,14 @@ with gr.Blocks(css=css) as demo:
         ).then(
                  fn=generate_image,
                  inputs=[image_container, files, init_img_file, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
-                         seed, attn_scale, image_embed_scale, is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps],
+                         seed, attn_scale, image_embed_scale, 
+                         is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_anneal_steps],
                  outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
                  inputs=[image_container, files, init_img_file, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
-                         seed, attn_scale, image_embed_scale, is_adaface_enabled, embman_ckpt_path, adaface_scale, adaface_anneal_steps], 
+                         seed, attn_scale, image_embed_scale, 
+                         is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_anneal_steps], 
                  outputs=[result_video], cache_examples=True )
 
 demo.launch(share=True)

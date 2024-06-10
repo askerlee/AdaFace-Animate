@@ -12,7 +12,7 @@ from adaface.adaface_wrapper import AdaFaceWrapper
 
 def load_adaface(base_model_path, embman_ckpt_path, device="cuda"):
     # base_model_path is only used for initialization, not really used in the inference.
-    adaface = AdaFaceWrapper(pipeline_name=None, base_model_path=base_model_path,
+    adaface = AdaFaceWrapper(pipeline_name="text2img", base_model_path=base_model_path,
                              embman_ckpt_path=embman_ckpt_path, device=device)
     return adaface
 

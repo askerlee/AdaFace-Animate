@@ -143,6 +143,8 @@ class FaceAdapterLora:
         uncond_image_prompt_embeds = self.image_proj_model(torch.zeros_like(clip_image_embeds))
         return image_prompt_embeds, uncond_image_prompt_embeds
 
+    # This scales the face-adapter face_hidden_states (attn output). attn_processor.scale: default 1.0.
+    # faceadapter/attention_processor.py:L283.
     def set_attn_scale(self, attn_scale):
         for attn_processor in self.pipe.unet.attn_processors.values():
             if isinstance(attn_processor, LoRAFaceAttnProcessor):
