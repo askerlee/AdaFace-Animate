@@ -18,10 +18,13 @@ from insightface.utils import face_align
 from PIL import Image
 import torch
 import argparse
-# From command line read command embman_ckpt_path
+# From command line read command adaface_ckpt_path
 parser = argparse.ArgumentParser()
-parser.add_argument('--embman_ckpt_path', type=str, 
+parser.add_argument('--adaface_ckpt_path', type=str, 
                     default='/data/shaohua/adaprompt/logs/subjects-celebrity2024-05-16T17-22-46_zero3-ada/checkpoints/embeddings_gs-30000.pt')
+# Don't use 'sd15' for base_model_type; it just generates messy videos.
+parser.add_argument('--base_model_type', type=str, default='rv40')
+parser.add_argument('--adaface_base_model_type', type=str, default='sd15')
 parser.add_argument('--gpu', type=int, default=0)
 args = parser.parse_args()
 
@@ -36,7 +39,10 @@ def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
 app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 app.prepare(ctx_id=args.gpu, det_size=(320, 320))
 
-id_animator, adaface = load_model(embman_ckpt_path=args.embman_ckpt_path, device=f"cuda:{args.gpu}")
+id_animator, adaface = load_model(base_model_type=args.base_model_type, 
+                                  adaface_base_model_type=args.adaface_base_model_type,
+                                  adaface_ckpt_path=args.adaface_ckpt_path, 
+                                  device=f"cuda:{args.gpu}")
 basedir     = os.getcwd()
 savedir     = os.path.join(basedir,'samples')
 os.makedirs(savedir, exist_ok=True)
@@ -89,7 +95,7 @@ def gen_init_images(uploaded_image_paths, prompt, adaface_id_cfg_scale, out_imag
 @spaces.GPU
 def generate_image(image_container, uploaded_image_paths, init_img_file_paths, init_img_selected_idx,
                    prompt, negative_prompt, num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
-                   is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, 
+                   is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, 
                    adaface_anneal_steps, progress=gr.Progress(track_tqdm=True)):
 
     prompt = prompt + " 8k uhd, high quality"
@@ -110,9 +116,9 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_paths, i
     if adaface is None or not is_adaface_enabled:
         adaface_prompt_embeds = None
     else:
-        if embman_ckpt_path != args.embman_ckpt_path:
+        if adaface_ckpt_path != args.adaface_ckpt_path:
             # Reload the embedding manager
-            adaface.load_subj_basis_generator(embman_ckpt_path)
+            adaface.load_subj_basis_generator(adaface_ckpt_path)
 
         adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
                                             out_id_embs_scale=adaface_id_cfg_scale, update_text_encoder=True)
@@ -306,10 +312,10 @@ with gr.Blocks(css=css) as demo:
                     value=0,
                     visible=False,
                 )
-                embman_ckpt_path = gr.Textbox(
+                adaface_ckpt_path = gr.Textbox(
                     label="AdaFace ckpt Path", 
-                    placeholder=args.embman_ckpt_path,
-                    value=args.embman_ckpt_path,
+                    placeholder=args.adaface_ckpt_path,
+                    value=args.adaface_ckpt_path,
                 )
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt", 
@@ -362,14 +368,14 @@ with gr.Blocks(css=css) as demo:
                  inputs=[image_container, files, init_img_files, init_img_selected_idx, 
                          prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, 
-                         is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps],
+                         is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps],
                  outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
                  inputs=[image_container, files, init_img_files, init_img_selected_idx, 
                          prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, 
-                         is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps], 
+                         is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps], 
                  outputs=[result_video], cache_examples=True )
 
 demo.launch(share=True)

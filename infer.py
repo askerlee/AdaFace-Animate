@@ -10,20 +10,30 @@ from animatediff.utils.convert_from_ckpt import convert_ldm_unet_checkpoint, con
 from faceadapter.face_adapter import FaceAdapterPlusForVideoLora
 from adaface.adaface_wrapper import AdaFaceWrapper
 
-def load_adaface(base_model_path, embman_ckpt_path, device="cuda"):
+def load_adaface(base_model_path, adaface_ckpt_path, device="cuda"):
     # base_model_path is only used for initialization, not really used in the inference.
     adaface = AdaFaceWrapper(pipeline_name="text2img", base_model_path=base_model_path,
-                             embman_ckpt_path=embman_ckpt_path, device=device)
+                             adaface_ckpt_path=adaface_ckpt_path, device=device)
     return adaface
 
-def load_model(embman_ckpt_path=None, device="cuda:0"):
-    inference_config = "inference-v2.yaml"
-    sd_version = "animatediff/sd"
-    id_ckpt = "models/animator.ckpt"
-    image_encoder_path = "image_encoder"
-    #"models/realisticVisionV60B1_v51VAE.safetensors"
-    dreambooth_model_path = "models/realisticvision/realisticVisionV40_v40VAE.safetensors" 
-    motion_module_path="models/v3_sd15_mm.ckpt" #"mm_sd_v15_v2.ckpt"
+def load_model(base_model_type="rv40", adaface_base_model_type="sd15", 
+               adaface_ckpt_path=None, device="cuda:0"):
+    inference_config    = "inference-v2.yaml"
+    sd_version          = "animatediff/sd"
+    id_ckpt             = "models/animator.ckpt"
+    image_encoder_path  = "image_encoder"
+
+    base_model_type_to_path = {
+        "rv40": "models/realisticvision/realisticVisionV40_v40VAE.safetensors",
+        "rv60": "models/realisticvision/realisticVisionV60B1_v51VAE.safetensors",
+        "sd15": "models/stable-diffusion-v-1-5/v1-5-pruned.safetensors",
+        "sd15_adaface": "models/stable-diffusion-v-1-5/v1-5-dste8-vae.ckpt"
+    }
+
+    base_model_path         = base_model_type_to_path[base_model_type]
+    adaface_base_model_path = base_model_type_to_path[adaface_base_model_type + "_adaface"]
+
+    motion_module_path="models/v3_sd15_mm.ckpt" 
     motion_lora_path = "models/v3_sd15_adapter.ckpt"
     inference_config = OmegaConf.load(inference_config)    
 
@@ -60,10 +70,10 @@ def load_model(embman_ckpt_path=None, device="cuda:0"):
             lora_model_path            = "",
             lora_alpha                 = 0.8
     ).to(device=device)
-    if dreambooth_model_path != "":
-        print(f"load dreambooth model from {dreambooth_model_path}")
+    if base_model_path != "":
+        print(f"load dreambooth model from {base_model_path}")
         dreambooth_state_dict = {}
-        with safe_open(dreambooth_model_path, framework="pt", device="cpu") as f:
+        with safe_open(base_model_path, framework="pt", device="cpu") as f:
             for key in f.keys():
                 dreambooth_state_dict[key] = f.get_tensor(key)
                         
@@ -98,9 +108,9 @@ def load_model(embman_ckpt_path=None, device="cuda:0"):
         id_animator = FaceAdapterPlusForVideoLora(pipeline, image_encoder_path, id_ckpt, num_tokens=16,
                                                   device=torch.device(device), torch_type=torch.float16)
 
-        if embman_ckpt_path is not None:
-            # dreambooth_model_path is not loaded.
-            adaface = load_adaface(dreambooth_model_path, embman_ckpt_path, device)
+        if adaface_ckpt_path is not None:
+            adaface = load_adaface(adaface_base_model_path, #dreambooth_model_path, 
+                                   adaface_ckpt_path, device)
         else:
             adaface = None
 
