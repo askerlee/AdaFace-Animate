@@ -24,7 +24,7 @@ parser.add_argument('--adaface_ckpt_path', type=str,
                     default='/data/shaohua/adaprompt/logs/subjects-celebrity2024-05-16T17-22-46_zero3-ada/checkpoints/embeddings_gs-30000.pt')
 # Don't use 'sd15' for base_model_type; it just generates messy videos.
 parser.add_argument('--base_model_type', type=str, default='rv40')
-parser.add_argument('--adaface_base_model_type', type=str, default='sd15')
+parser.add_argument('--adaface_base_model_type', type=str, default='rv40')
 parser.add_argument('--gpu', type=int, default=0)
 args = parser.parse_args()
 

@@ -31,7 +31,10 @@ def load_model(base_model_type="rv40", adaface_base_model_type="sd15",
     }
 
     base_model_path         = base_model_type_to_path[base_model_type]
-    adaface_base_model_path = base_model_type_to_path[adaface_base_model_type + "_adaface"]
+    if adaface_base_model_type + "_adaface" in base_model_type_to_path:
+        adaface_base_model_path = base_model_type_to_path[adaface_base_model_type + "_adaface"]
+    else:
+        adaface_base_model_path = base_model_type_to_path[adaface_base_model_type]
 
     motion_module_path="models/v3_sd15_mm.ckpt" 
     motion_lora_path = "models/v3_sd15_adapter.ckpt"
