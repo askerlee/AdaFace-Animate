@@ -57,7 +57,7 @@ def remove_back_to_files():
     return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)
 
 @spaces.GPU
-def gen_init_image(uploaded_image_paths, prompt):
+def gen_init_image(uploaded_image_paths, prompt, adaface_id_cfg_scale):
     if uploaded_image_paths is None:
         print("No image uploaded")
         return None, None, None
@@ -66,7 +66,7 @@ def gen_init_image(uploaded_image_paths, prompt):
     # Extract the file paths.
     uploaded_image_paths = [path[0] for path in uploaded_image_paths]
     adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
-                                        out_id_embs_scale=1, update_text_encoder=True)
+                                        out_id_embs_scale=adaface_id_cfg_scale, update_text_encoder=True)
     noise = torch.randn(1, 3, 512, 512)
     # sample: A PIL Image instance.
     sample = adaface(noise, prompt, out_image_count=1, verbose=True)[0]
@@ -262,7 +262,7 @@ with gr.Blocks(css=css) as demo:
                     label="AdaFace Embedding ID CFG Scale",
                     minimum=0,
                     maximum=4,
-                    step=0.1,
+                    step=0.25,
                     value=1,
                 )
             adaface_power_scale = gr.Slider(
@@ -333,7 +333,7 @@ with gr.Blocks(css=css) as demo:
 
         init_img_file.upload(fn=swap_to_gallery, inputs=init_img_file, outputs=[uploaded_init_img_gallery, init_clear_button_column, init_img_file])
         remove_init_and_reupload.click(fn=remove_back_to_files,        outputs=[uploaded_init_img_gallery, init_clear_button_column, init_img_file])
-        gen_init.click(fn=gen_init_image, inputs=[uploaded_files_gallery, prompt], 
+        gen_init.click(fn=gen_init_image, inputs=[uploaded_files_gallery, prompt, adaface_id_cfg_scale], 
                        outputs=[uploaded_init_img_gallery, init_img_file, init_clear_button_column])
 
         submit.click(fn=validate,
