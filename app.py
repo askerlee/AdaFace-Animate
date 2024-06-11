@@ -80,8 +80,8 @@ def gen_init_image(uploaded_image_paths, prompt):
 @spaces.GPU
 def generate_image(image_container, uploaded_image_paths, init_img_file_path, prompt, negative_prompt, 
                    num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
-                   is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_anneal_steps,
-                   progress=gr.Progress(track_tqdm=True)):
+                   is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, 
+                   adaface_anneal_steps, progress=gr.Progress(track_tqdm=True)):
     prompt = prompt + " 8k uhd, high quality"
     if " shot" not in prompt:
         prompt = prompt + ", medium shot"
@@ -124,9 +124,9 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_path, pr
                                   prompt = prompt,
                                   negative_prompt = negative_prompt + " long shots, full body",
                                   adaface_embeds  = adaface_prompt_embeds,
-                                  # This adaface_scale is not so useful, and when it's set >= 2, weird artifacts appear. So we disable it,
-                                  # and apply adaface_scale in the generate_adaface_embeddings() function.
-                                  adaface_scale       = 1,
+                                  # adaface_scale is not so useful, and when it's set >= 2, weird artifacts appear. 
+                                  # Here it's limited to 0.7~1.3.
+                                  adaface_scale       = adaface_power_scale,
                                   num_inference_steps = num_steps,
                                   adaface_anneal_steps = adaface_anneal_steps,
                                   seed=seed,
@@ -259,9 +259,16 @@ with gr.Blocks(css=css) as demo:
                     value=1,
                 )
             adaface_id_cfg_scale = gr.Slider(
-                    label="AdaFace Embedding Scale",
+                    label="AdaFace Embedding ID CFG Scale",
                     minimum=0,
                     maximum=4,
+                    step=0.1,
+                    value=1,
+                )
+            adaface_power_scale = gr.Slider(
+                    label="AdaFace Embedding Power Scale",
+                    minimum=0.7,
+                    maximum=1.3,
                     step=0.1,
                     value=1,
                 )
@@ -277,12 +284,14 @@ with gr.Blocks(css=css) as demo:
                     value=16,
                 )
                 is_adaface_enabled = gr.Checkbox(label="Enable AdaFace", value=True)
+                # adaface_anneal_steps is no longer necessary, but we keep it here for future use.
                 adaface_anneal_steps = gr.Slider(
                     label="AdaFace Anneal Steps",
                     minimum=0,
                     maximum=2,
                     step=1,
                     value=0,
+                    visible=False,
                 )
                 embman_ckpt_path = gr.Textbox(
                     label="AdaFace ckpt Path", 
@@ -338,13 +347,13 @@ with gr.Blocks(css=css) as demo:
                  fn=generate_image,
                  inputs=[image_container, files, init_img_file, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, 
-                         is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_anneal_steps],
+                         is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps],
                  outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
                  inputs=[image_container, files, init_img_file, prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, 
-                         is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_anneal_steps], 
+                         is_adaface_enabled, embman_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps], 
                  outputs=[result_video], cache_examples=True )
 
 demo.launch(share=True)
