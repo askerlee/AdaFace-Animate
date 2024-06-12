@@ -27,7 +27,8 @@ def load_model(base_model_type="rv40", adaface_base_model_type="sd15",
         "rv40": "models/realisticvision/realisticVisionV40_v40VAE.safetensors",
         "rv60": "models/realisticvision/realisticVisionV60B1_v51VAE.safetensors",
         "sd15": "models/stable-diffusion-v-1-5/v1-5-pruned.safetensors",
-        "sd15_adaface": "models/stable-diffusion-v-1-5/v1-5-dste8-vae.ckpt"
+        "sd15_adaface": "models/stable-diffusion-v-1-5/v1-5-dste8-vae.ckpt",
+        "toonyou": "models/toonyou/toonyou_beta6.safetensors"
     }
 
     base_model_path         = base_model_type_to_path[base_model_type]
