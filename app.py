@@ -23,8 +23,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--adaface_ckpt_path', type=str, 
                     default='/data/shaohua/adaprompt/logs/subjects-celebrity2024-05-16T17-22-46_zero3-ada/checkpoints/embeddings_gs-30000.pt')
 # Don't use 'sd15' for base_model_type; it just generates messy videos.
-parser.add_argument('--base_model_type', type=str, default='rv40')
-parser.add_argument('--adaface_base_model_type', type=str, default='rv40')
+parser.add_argument('--base_model_type', type=str, default='sar')
+parser.add_argument('--adaface_base_model_type', type=str, default='sar')
 parser.add_argument('--gpu', type=int, default=0)
 args = parser.parse_args()
 
@@ -275,14 +275,14 @@ with gr.Blocks(css=css) as demo:
                     minimum=0,
                     maximum=2,
                     step=0.1,
-                    value=1,
+                    value=0.7,
                 )
             adaface_id_cfg_scale = gr.Slider(
                     label="AdaFace Embedding ID CFG Scale",
-                    minimum=0,
-                    maximum=4,
+                    minimum=1,
+                    maximum=8,
                     step=0.25,
-                    value=1,
+                    value=4,
                 )
             adaface_power_scale = gr.Slider(
                     label="AdaFace Embedding Power Scale",
