@@ -292,7 +292,7 @@ with gr.Blocks(css=css) as demo:
                     value=1,
                 )
              
-            submit = gr.Button("Submit")
+            submit = gr.Button("Generate Video")
 
             with gr.Accordion(open=False, label="Advanced Options"):
                 video_length = gr.Slider(

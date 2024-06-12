@@ -32,6 +32,7 @@ def load_model(base_model_type="rv40", adaface_base_model_type="sd15",
         "epv5": "models/epic_realism/epicrealism_pureEvolutionV5.safetensors",
         "ar181": "models/absolutereality/absolutereality_v181.safetensors",
         "ar16":  "models/absolutereality/ar-v1-6.safetensors",
+        "sar":   "models/sar/sar.safetensors",
     }
 
     base_model_path         = base_model_type_to_path[base_model_type]
