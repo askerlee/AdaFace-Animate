@@ -242,7 +242,7 @@ with gr.Blocks(css=css) as demo:
             image_container = gr.Image(label="image container", sources="upload", type="numpy", height=256, visible=False)
             uploaded_files_gallery = gr.Gallery(label="Your images", visible=False, columns=5, rows=1, height=200)
             with gr.Column(visible=False) as clear_button_column:
-                remove_and_reupload = gr.ClearButton(value="Remove and upload new ones", components=files, size="sm")
+                remove_and_reupload = gr.ClearButton(value="Remove and upload subject images", components=files, size="sm")
 
             init_img_files = gr.File(
                             label="Drag (Select) 1 image for initialization",
@@ -255,14 +255,7 @@ with gr.Blocks(css=css) as demo:
             uploaded_init_img_gallery = gr.Gallery(label="Init image", visible=False, columns=3, rows=1, height=200)
             # placeholder is just hint, not the real value. So we use "value='0'" instead of "placeholder='0'".
             init_img_selected_idx = gr.Textbox(label="Selected init image index", value="0", visible=False)
-            init_image_strength = gr.Slider(
-                    label="Init Image Strength",
-                    minimum=0,
-                    maximum=5,
-                    step=0.5,
-                    value=1.0,
-                )
-            
+
             with gr.Column(visible=False) as init_clear_button_column:
                 remove_init_and_reupload = gr.ClearButton(value="Remove and upload new init image", components=init_img_files, size="sm")
             with gr.Column(visible=True) as init_gen_button_column:
@@ -288,10 +281,10 @@ with gr.Blocks(css=css) as demo:
                 )
             adaface_id_cfg_scale = gr.Slider(
                     label="AdaFace Embedding ID CFG Scale",
-                    minimum=1,
-                    maximum=8,
+                    minimum=0.5,
+                    maximum=6,
                     step=0.25,
-                    value=4,
+                    value=2,
                 )
             adaface_power_scale = gr.Slider(
                     label="AdaFace Embedding Power Scale",
@@ -326,6 +319,14 @@ with gr.Blocks(css=css) as demo:
                     placeholder=args.adaface_ckpt_path,
                     value=args.adaface_ckpt_path,
                 )
+                init_image_strength = gr.Slider(
+                        label="Init Image Strength",
+                        minimum=0,
+                        maximum=3,
+                        step=0.25,
+                        value=1.0,
+                    )
+                                
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt", 
                     placeholder="low quality",
