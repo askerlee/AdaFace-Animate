@@ -93,7 +93,7 @@ def gen_init_images(uploaded_image_paths, prompt, adaface_id_cfg_scale, out_imag
     return gr.update(value=face_paths, visible=True), gr.update(value=face_paths, visible=False), gr.update(visible=True)
 
 @spaces.GPU
-def generate_image(image_container, uploaded_image_paths, init_img_file_paths, init_img_selected_idx,
+def generate_image(image_container, uploaded_image_paths, init_img_file_paths, init_img_selected_idx, init_image_strength,
                    prompt, negative_prompt, num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
                    is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, 
                    adaface_anneal_steps, progress=gr.Progress(track_tqdm=True)):
@@ -138,6 +138,7 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_paths, i
 
     sample = id_animator.generate(prompt_img_lists, 
                                   init_image      = init_image,
+                                  init_image_strength = init_image_strength,
                                   prompt = prompt,
                                   negative_prompt = negative_prompt + " long shots, full body",
                                   adaface_embeds  = adaface_prompt_embeds,
@@ -252,8 +253,16 @@ with gr.Blocks(css=css) as demo:
             # Although there's only one image, we still use columns=3, to scale down the image size.
             # Otherwise it will occupy the full width, and the gallery won't show the whole image.
             uploaded_init_img_gallery = gr.Gallery(label="Init image", visible=False, columns=3, rows=1, height=200)
-            init_img_selected_idx = gr.Textbox(label="Selected init image index", placeholder="0", visible=False)
-
+            # placeholder is just hint, not the real value. So we use "value='0'" instead of "placeholder='0'".
+            init_img_selected_idx = gr.Textbox(label="Selected init image index", value="0", visible=False)
+            init_image_strength = gr.Slider(
+                    label="Init Image Strength",
+                    minimum=0,
+                    maximum=5,
+                    step=0.5,
+                    value=1.0,
+                )
+            
             with gr.Column(visible=False) as init_clear_button_column:
                 remove_init_and_reupload = gr.ClearButton(value="Remove and upload new init image", components=init_img_files, size="sm")
             with gr.Column(visible=True) as init_gen_button_column:
@@ -365,14 +374,14 @@ with gr.Blocks(css=css) as demo:
             api_name=False,
         ).then(
                  fn=generate_image,
-                 inputs=[image_container, files, init_img_files, init_img_selected_idx, 
+                 inputs=[image_container, files, init_img_files, init_img_selected_idx, init_image_strength,
                          prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, 
                          is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps],
                  outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
-                 inputs=[image_container, files, init_img_files, init_img_selected_idx, 
+                 inputs=[image_container, files, init_img_files, init_img_selected_idx, init_image_strength,
                          prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, 
                          is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps], 

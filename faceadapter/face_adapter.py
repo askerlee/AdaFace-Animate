@@ -246,6 +246,7 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
         self,
         pil_image=None,
         init_image=None,
+        init_image_strength=1.,
         clip_image_embeds=None,
         prompt=None,
         negative_prompt=None,
@@ -325,6 +326,7 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
 
         video = self.pipe(
             init_image=init_image,
+            init_image_strength=init_image_strength,
             prompt = "",
             prompt_embeds = prompt_embeds,
             negative_prompt_embeds=negative_prompt_embeds,

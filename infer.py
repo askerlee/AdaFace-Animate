@@ -16,7 +16,7 @@ def load_adaface(base_model_path, adaface_ckpt_path, device="cuda"):
                              adaface_ckpt_path=adaface_ckpt_path, device=device)
     return adaface
 
-def load_model(base_model_type="rv40", adaface_base_model_type="sd15", 
+def load_model(base_model_type="sar", adaface_base_model_type="sar", 
                adaface_ckpt_path=None, device="cuda:0"):
     inference_config    = "inference-v2.yaml"
     sd_version          = "animatediff/sd"

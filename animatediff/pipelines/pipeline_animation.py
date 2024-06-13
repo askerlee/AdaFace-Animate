@@ -395,7 +395,7 @@ class AnimationPipeline(DiffusionPipeline):
                 f" {type(callback_steps)}."
             )
 
-    def prepare_latents(self, init_image, batch_size, num_channels_latents, video_length, height, width, dtype, device, generator, latents=None):
+    def prepare_latents(self, init_image, init_image_strength, batch_size, num_channels_latents, video_length, height, width, dtype, device, generator, latents=None):
         shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
         
         if init_image is not None:
@@ -441,7 +441,7 @@ class AnimationPipeline(DiffusionPipeline):
                         dist_to_end = max(dist_to_end, 0.05)
                         # Changed from /30 to /100.
                         # gradully reduce init alpha along video frames (loosen restriction)
-                        init_alpha = dist_to_end / 100
+                        init_alpha = dist_to_end * init_image_strength / 100
                         latents[:, :, i, :, :] = init_latents * init_alpha + latents[:, :, i, :, :] * (1 - init_alpha)
         else:
             if latents.shape != shape:
@@ -459,6 +459,7 @@ class AnimationPipeline(DiffusionPipeline):
         prompt: Union[str, List[str]],
         video_length: Optional[int],
         init_image: Union[PIL.Image.Image, torch.Tensor],
+        init_image_strength: float = 1.0,
         height: Optional[int] = None,
         width: Optional[int] = None,
         num_inference_steps: int = 50,
@@ -533,6 +534,7 @@ class AnimationPipeline(DiffusionPipeline):
         num_channels_latents = self.unet.in_channels
         latents = self.prepare_latents(
             init_image,
+            init_image_strength,
             batch_size * num_videos_per_prompt,
             num_channels_latents,
             video_length,
@@ -637,6 +639,7 @@ class AnimationPipeline(DiffusionPipeline):
         prompt: Union[str, List[str]],
         video_length: Optional[int],
         init_image: Union[PIL.Image.Image, torch.Tensor],
+        init_image_strength: float = 1.0,
         height: Optional[int] = None,
         width: Optional[int] = None,
         num_inference_steps: int = 50,
@@ -700,6 +703,7 @@ class AnimationPipeline(DiffusionPipeline):
         num_channels_latents = self.unet.in_channels
         latents = self.prepare_latents(
             init_image,
+            init_image_strength,
             batch_size * num_videos_per_prompt,
             num_channels_latents,
             video_length,
