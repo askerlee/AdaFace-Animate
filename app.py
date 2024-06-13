@@ -140,7 +140,7 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_paths, i
                                   init_image      = init_image,
                                   init_image_strength = init_image_strength,
                                   prompt = prompt,
-                                  negative_prompt = negative_prompt + " long shots, full body",
+                                  negative_prompt = negative_prompt,
                                   adaface_embeds  = adaface_prompt_embeds,
                                   # adaface_scale is not so useful, and when it's set >= 2, weird artifacts appear. 
                                   # Here it's limited to 0.7~1.3.
@@ -277,14 +277,14 @@ with gr.Blocks(css=css) as demo:
                     minimum=0,
                     maximum=2,
                     step=0.1,
-                    value=0.7,
+                    value=0.8,
                 )
             adaface_id_cfg_scale = gr.Slider(
                     label="AdaFace Embedding ID CFG Scale",
                     minimum=0.5,
                     maximum=6,
                     step=0.25,
-                    value=2,
+                    value=1.5,
                 )
             adaface_power_scale = gr.Slider(
                     label="AdaFace Embedding Power Scale",
