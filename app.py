@@ -305,15 +305,6 @@ with gr.Blocks(css=css) as demo:
                     value=16,
                 )
                 is_adaface_enabled = gr.Checkbox(label="Enable AdaFace", value=True)
-                # adaface_anneal_steps is no longer necessary, but we keep it here for future use.
-                adaface_anneal_steps = gr.Slider(
-                    label="AdaFace Anneal Steps",
-                    minimum=0,
-                    maximum=2,
-                    step=1,
-                    value=0,
-                    visible=False,
-                )
                 adaface_ckpt_path = gr.Textbox(
                     label="AdaFace ckpt Path", 
                     placeholder=args.adaface_ckpt_path,
@@ -326,6 +317,15 @@ with gr.Blocks(css=css) as demo:
                         step=0.25,
                         value=1.0,
                     )
+                # adaface_anneal_steps is no longer necessary, but we keep it here for future use.
+                adaface_anneal_steps = gr.Slider(
+                    label="AdaFace Anneal Steps",
+                    minimum=0,
+                    maximum=2,
+                    step=1,
+                    value=0,
+                    visible=True,
+                )
                                 
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt", 
