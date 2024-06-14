@@ -257,11 +257,6 @@ with gr.Blocks(css=css) as demo:
             # placeholder is just hint, not the real value. So we use "value='0'" instead of "placeholder='0'".
             init_img_selected_idx = gr.Textbox(label="Selected init image index", value="0", visible=False)
 
-            with gr.Column(visible=False) as init_clear_button_column:
-                remove_init_and_reupload = gr.ClearButton(value="Remove and upload new init image", components=init_img_files, size="sm")
-            with gr.Column(visible=True) as init_gen_button_column:
-                gen_init = gr.Button(value="Generate 3 new init images")
-
             init_image_strength = gr.Slider(
                     label="Init Image Strength",
                     minimum=0,
@@ -276,6 +271,11 @@ with gr.Blocks(css=css) as demo:
                     step=0.02,
                     value=0.1,
                 )
+
+            with gr.Column(visible=False) as init_clear_button_column:
+                remove_init_and_reupload = gr.ClearButton(value="Remove and upload new init image", components=init_img_files, size="sm")
+            with gr.Column(visible=True) as init_gen_button_column:
+                gen_init = gr.Button(value="Generate 3 new init images")
 
             prompt = gr.Textbox(label="Prompt",
                     #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
