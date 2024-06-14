@@ -93,7 +93,8 @@ def gen_init_images(uploaded_image_paths, prompt, adaface_id_cfg_scale, out_imag
     return gr.update(value=face_paths, visible=True), gr.update(value=face_paths, visible=False), gr.update(visible=True)
 
 @spaces.GPU
-def generate_image(image_container, uploaded_image_paths, init_img_file_paths, init_img_selected_idx, init_image_strength,
+def generate_image(image_container, uploaded_image_paths, init_img_file_paths, init_img_selected_idx, 
+                   init_image_strength, init_image_final_weight,
                    prompt, negative_prompt, num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
                    is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, 
                    adaface_anneal_steps, progress=gr.Progress(track_tqdm=True)):
@@ -138,7 +139,7 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_paths, i
 
     sample = id_animator.generate(prompt_img_lists, 
                                   init_image      = init_image,
-                                  init_image_strength = init_image_strength,
+                                  init_image_strength = (init_image_strength, init_image_final_weight),
                                   prompt = prompt,
                                   negative_prompt = negative_prompt,
                                   adaface_embeds  = adaface_prompt_embeds,
@@ -317,6 +318,13 @@ with gr.Blocks(css=css) as demo:
                         step=0.25,
                         value=1.0,
                     )
+                init_image_final_weight = gr.Slider(
+                        label="Final Weight of the Init Image",
+                        minimum=0,
+                        maximum=0.1,
+                        step=0.01,
+                        value=0.05,
+                    )
                 # adaface_anneal_steps is no longer necessary, but we keep it here for future use.
                 adaface_anneal_steps = gr.Slider(
                     label="AdaFace Anneal Steps",
@@ -324,13 +332,13 @@ with gr.Blocks(css=css) as demo:
                     maximum=2,
                     step=1,
                     value=0,
-                    visible=True,
+                    visible=False,
                 )
                                 
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt", 
                     placeholder="low quality",
-                    value="(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, bare breasts, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, long neck, UnrealisticDream",
+                    value="face portrait, (deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, bare breasts, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, long neck, UnrealisticDream",
                 )
                 num_steps = gr.Slider( 
                     label="Number of sample steps",
@@ -375,14 +383,14 @@ with gr.Blocks(css=css) as demo:
             api_name=False,
         ).then(
                  fn=generate_image,
-                 inputs=[image_container, files, init_img_files, init_img_selected_idx, init_image_strength,
+                 inputs=[image_container, files, init_img_files, init_img_selected_idx, init_image_strength, init_image_final_weight,
                          prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, 
                          is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps],
                  outputs=[result_video]
         )
     gr.Examples( fn=generate_image, examples=[], #examples, 
-                 inputs=[image_container, files, init_img_files, init_img_selected_idx, init_image_strength,
+                 inputs=[image_container, files, init_img_files, init_img_selected_idx, init_image_strength, init_image_final_weight,
                          prompt, negative_prompt, num_steps, video_length, guidance_scale, 
                          seed, attn_scale, image_embed_scale, 
                          is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps], 

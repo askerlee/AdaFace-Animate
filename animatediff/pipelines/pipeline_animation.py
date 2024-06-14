@@ -434,11 +434,12 @@ class AnimationPipeline(DiffusionPipeline):
                 latents = torch.randn(shape, generator=generator, device=rand_device, dtype=dtype).to(device)
                 if init_latents is not None:
                     blend_frames = video_length // 2
+                    init_image_strength, init_image_final_weight = init_image_strength
                     for i in range(video_length):
                         dist_to_end = (blend_frames - float(i)) / blend_frames
                         # When i > 0.9 * blend_frames, dist_to_end < 0.1. Then it will be changed to 0.05,
                         # so that the last half of the video still is still initialized with a little bit of init_latents.
-                        dist_to_end = max(dist_to_end, 0.05)
+                        dist_to_end = max(dist_to_end, init_image_final_weight)
                         # Changed from /30 to /100.
                         # gradully reduce init alpha along video frames (loosen restriction)
                         init_alpha = dist_to_end * init_image_strength / 100
