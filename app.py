@@ -285,7 +285,7 @@ with gr.Blocks(css=css) as demo:
                     minimum=0.5,
                     maximum=6,
                     step=0.25,
-                    value=1.5,
+                    value=2,
                 )
             adaface_power_scale = gr.Slider(
                     label="AdaFace Embedding Power Scale",
