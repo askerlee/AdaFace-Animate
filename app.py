@@ -321,9 +321,9 @@ with gr.Blocks(css=css) as demo:
                 init_image_final_weight = gr.Slider(
                         label="Final Weight of the Init Image",
                         minimum=0,
-                        maximum=0.1,
-                        step=0.01,
-                        value=0.05,
+                        maximum=0.2,
+                        step=0.02,
+                        value=0.1,
                     )
                 # adaface_anneal_steps is no longer necessary, but we keep it here for future use.
                 adaface_anneal_steps = gr.Slider(
