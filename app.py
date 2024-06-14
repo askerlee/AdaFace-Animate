@@ -262,6 +262,21 @@ with gr.Blocks(css=css) as demo:
             with gr.Column(visible=True) as init_gen_button_column:
                 gen_init = gr.Button(value="Generate 3 new init images")
 
+            init_image_strength = gr.Slider(
+                    label="Init Image Strength",
+                    minimum=0,
+                    maximum=3,
+                    step=0.25,
+                    value=1.5,
+                )
+            init_image_final_weight = gr.Slider(
+                    label="Final Weight of the Init Image",
+                    minimum=0,
+                    maximum=0.2,
+                    step=0.02,
+                    value=0.1,
+                )
+
             prompt = gr.Textbox(label="Prompt",
                     #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
                        placeholder="Iron Man soars through the clouds, his repulsors blazing.")
@@ -287,14 +302,7 @@ with gr.Blocks(css=css) as demo:
                     step=0.25,
                     value=2,
                 )
-            adaface_power_scale = gr.Slider(
-                    label="AdaFace Embedding Power Scale",
-                    minimum=0.7,
-                    maximum=1.3,
-                    step=0.1,
-                    value=1,
-                )
-             
+
             submit = gr.Button("Generate Video")
 
             with gr.Accordion(open=False, label="Advanced Options"):
@@ -311,20 +319,15 @@ with gr.Blocks(css=css) as demo:
                     placeholder=args.adaface_ckpt_path,
                     value=args.adaface_ckpt_path,
                 )
-                init_image_strength = gr.Slider(
-                        label="Init Image Strength",
-                        minimum=0,
-                        maximum=3,
-                        step=0.25,
-                        value=1.0,
+
+                adaface_power_scale = gr.Slider(
+                        label="AdaFace Embedding Power Scale",
+                        minimum=0.7,
+                        maximum=1.3,
+                        step=0.1,
+                        value=1,
                     )
-                init_image_final_weight = gr.Slider(
-                        label="Final Weight of the Init Image",
-                        minimum=0,
-                        maximum=0.2,
-                        step=0.02,
-                        value=0.1,
-                    )
+                             
                 # adaface_anneal_steps is no longer necessary, but we keep it here for future use.
                 adaface_anneal_steps = gr.Slider(
                     label="AdaFace Anneal Steps",
