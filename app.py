@@ -57,10 +57,10 @@ def swap_to_gallery(images):
     return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(visible=False)
 
 def remove_back_to_files():
-    # Hide uploaded_files_gallery, hide files, show clear_button_column
+    # Hide uploaded_files_gallery,    hide files,          show clear_button_column,      reset init_img_selected_idx
     # Or:
-    # Hide uploaded_init_img_gallery, show init_img_files, hide init_clear_button_column
-    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True)
+    # Hide uploaded_init_img_gallery, show init_img_files, hide init_clear_button_column, reset init_img_selected_idx
+    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(value="0")
 
 def get_clicked_image(data: gr.SelectData):
     return data.index
@@ -366,10 +366,11 @@ with gr.Blocks(css=css) as demo:
             result_video = gr.Video(label="Generated Animation", interactive=False)
         
         files.upload(fn=swap_to_gallery, inputs=files,     outputs=[uploaded_files_gallery, clear_button_column, files])
-        remove_and_reupload.click(fn=remove_back_to_files, outputs=[uploaded_files_gallery, clear_button_column, files])
+        remove_and_reupload.click(fn=remove_back_to_files, outputs=[uploaded_files_gallery, clear_button_column, files, init_img_selected_idx])
 
         init_img_files.upload(fn=swap_to_gallery, inputs=init_img_files, outputs=[uploaded_init_img_gallery, init_clear_button_column, init_img_files])
-        remove_init_and_reupload.click(fn=remove_back_to_files,        outputs=[uploaded_init_img_gallery, init_clear_button_column, init_img_files])
+        remove_init_and_reupload.click(fn=remove_back_to_files,        outputs=[uploaded_init_img_gallery, init_clear_button_column, 
+                                                                                init_img_files, init_img_selected_idx])
         gen_init.click(fn=gen_init_images, inputs=[uploaded_files_gallery, prompt, adaface_id_cfg_scale], 
                        outputs=[uploaded_init_img_gallery, init_img_files, init_clear_button_column])
         uploaded_init_img_gallery.select(fn=get_clicked_image, inputs=None, outputs=init_img_selected_idx)
