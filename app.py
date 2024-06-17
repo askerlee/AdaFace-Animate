@@ -54,13 +54,13 @@ def swap_to_gallery(images):
     # Update uploaded_files_gallery, show files, hide clear_button_column
     # Or:
     # Update uploaded_init_img_gallery, show init_img_files, hide init_clear_button_column
-    return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(visible=False)
+    return gr.update(value=images, visible=True), gr.update(visible=True), gr.update(value=images, visible=False)
 
 def remove_back_to_files():
-    # Hide uploaded_files_gallery,    hide files,          show clear_button_column,      reset init_img_selected_idx
+    # Hide uploaded_files_gallery,    show clear_button_column,      hide files,           reset init_img_selected_idx
     # Or:
-    # Hide uploaded_init_img_gallery, show init_img_files, hide init_clear_button_column, reset init_img_selected_idx
-    return gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(value="0")
+    # Hide uploaded_init_img_gallery, hide init_clear_button_column, show init_img_files,  reset init_img_selected_idx
+    return gr.update(visible=False), gr.update(visible=False), gr.update(value=None, visible=True), gr.update(value="0")
 
 def get_clicked_image(data: gr.SelectData):
     return data.index
@@ -267,8 +267,8 @@ with gr.Blocks(css=css) as demo:
             init_image_final_weight = gr.Slider(
                     label="Final Weight of the Init Image",
                     minimum=0,
-                    maximum=0.2,
-                    step=0.02,
+                    maximum=0.25,
+                    step=0.025,
                     value=0.1,
                 )
 
