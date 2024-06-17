@@ -26,6 +26,7 @@ parser.add_argument('--adaface_ckpt_path', type=str,
 parser.add_argument('--base_model_type', type=str, default='sar')
 parser.add_argument('--adaface_base_model_type', type=str, default='sar')
 parser.add_argument('--gpu', type=int, default=0)
+parser.add_argument('--ip', type=str, default="0.0.0.0")
 args = parser.parse_args()
 
 def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
@@ -400,4 +401,4 @@ with gr.Blocks(css=css) as demo:
                          is_adaface_enabled, adaface_ckpt_path, adaface_id_cfg_scale, adaface_power_scale, adaface_anneal_steps], 
                  outputs=[result_video], cache_examples=True )
 
-demo.launch(share=True)
+demo.launch(share=True, server_name=args.ip, ssl_verify=False)
