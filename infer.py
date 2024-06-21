@@ -21,7 +21,7 @@ def load_model(base_model_type="sar", adaface_base_model_type="sar",
     inference_config    = "inference-v2.yaml"
     sd_version          = "animatediff/sd"
     id_ckpt             = "models/animator.ckpt"
-    image_encoder_path  = "image_encoder"
+    image_encoder_path  = "models/image_encoder"
 
     base_model_type_to_path = {
         "rv40": "models/realisticvision/realisticVisionV40_v40VAE.safetensors",

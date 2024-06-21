@@ -10,7 +10,5 @@ arc2face/*
 arc2face/
 *.safetensors
 *.bin
-image_encoder/*
-image_encoder/
-__assets__/*
-__assets__/
+models/*
+models

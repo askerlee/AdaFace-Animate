@@ -21,7 +21,7 @@ import argparse
 # From command line read command adaface_ckpt_path
 parser = argparse.ArgumentParser()
 parser.add_argument('--adaface_ckpt_path', type=str, 
-                    default='/data/shaohua/adaprompt/logs/subjects-celebrity2024-05-16T17-22-46_zero3-ada/checkpoints/embeddings_gs-30000.pt')
+                    default='models/adaface/subjects-celebrity2024-05-16T17-22-46_zero3-ada-30000.pt')
 # Don't use 'sd15' for base_model_type; it just generates messy videos.
 parser.add_argument('--base_model_type', type=str, default='sar')
 parser.add_argument('--adaface_base_model_type', type=str, default='sar')
@@ -301,7 +301,7 @@ with gr.Blocks(css=css) as demo:
                     minimum=0.5,
                     maximum=6,
                     step=0.25,
-                    value=2,
+                    value=1.5,
                 )
 
             submit = gr.Button("Generate Video")
