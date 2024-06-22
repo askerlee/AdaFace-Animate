@@ -5,10 +5,7 @@ gradio_cached_examples/
 samples/*
 samples/
 __pycache__/*
-*.ckpt
-arc2face/*
-arc2face/
-*.safetensors
-*.bin
 models/*
 models
+animatediff/sd/*
+animatediff/sd/
