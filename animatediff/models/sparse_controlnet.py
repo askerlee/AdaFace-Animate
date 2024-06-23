@@ -36,7 +36,7 @@ from .unet_blocks import (
 from einops import repeat, rearrange
 from .resnet import InflatedConv3d
 
-from diffusers.models.unet_2d_condition import UNet2DConditionModel
+from diffusers import UNet2DConditionModel
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -378,7 +378,7 @@ class SparseControlNetModel(ModelMixin, ConfigMixin):
             new_state_dict[name] = param
         return new_state_dict
 
-    # Copied from diffusers.models.unet_2d_condition.UNet2DConditionModel.set_attention_slice
+    # Copied from diffusers.models.UNet2DConditionModel.set_attention_slice
     def set_attention_slice(self, slice_size):
         r"""
         Enable sliced attention computation.
