@@ -6,7 +6,6 @@ gradio
 transformers
 torch
 torchvision
-xformers
 wandb
 insightface
 omegaconf
