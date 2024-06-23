@@ -220,24 +220,21 @@ examples = [
 with gr.Blocks(css=css) as demo:
     gr.Markdown(
         """
-        # ID-Animator: Zero-Shot Identity-Preserving Human Video Generation
-        Xuanhua He, Quande Liu✉, Shengju Qian,Xin Wang, Tao Hu, Ke Cao, Keyu Yan, Jie Zhang✉ (✉Corresponding Author)<br>
-        [Arxiv Report](https://arxiv.org/abs/2404.15275) | [Project Page](https://id-animator.github.io/) | [Github](https://github.com/ID-Animator/ID-Animator)
+        # AdaFace-Animate: Zero-Shot Subject-Driven Video Generation for Humans
         """
     )
     gr.Markdown(
         """
     ❗️❗️❗️**Tips:**
-    - we provide some examples in the bottom, you can try these example prompts first
-    - you can upload one image for generating ID-specific video or upload multiple images for mixing different IDs
-    - Adjust the image scale to enhance the generation quality. A larger image scale improves the ability to preserve identity, while a smaller image scale enhances the ability to follow instructions.
+    - You can upload one or more subject images for generating ID-specific video.
+    - Try different parameter combinations for the best generation quality.
         """
     )
 
     with gr.Row():
         with gr.Column():
             files = gr.File(
-                        label="Drag (Select) 1 or more photos of your face",
+                        label="Drag (Select) 1 or more photos of a person's face",
                         file_types=["image"],
                         file_count="multiple"
                     )

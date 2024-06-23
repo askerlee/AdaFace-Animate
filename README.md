@@ -33,21 +33,21 @@ Some example videos are shown below. The full set of videos can be found in [Gal
     </tr>
     <tr>
         <td style="text-align: center"><img src="assets/jennifer-lawrence/jennifer lawrence.jpg" style="width:100%"></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/c7959b10-90c5-4f86-9c32-7d31027e5680" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/f14d0d9f-4f24-45f8-8836-7e90c18054f4" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/838e14fb-da0f-4e65-b537-42f8138d0145" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/ea12a906-8637-4b32-97ba-c439990fec0a" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/83a08691-4f4e-4898-b4ae-be5dfcd1fb85" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/1e957f80-376b-4ca7-81ca-fa63f19a1c5a" type="video/mp4"></video></td>
     </tr>
     <tr>
         <td style="text-align: center"><img src="assets/yann-lecun/yann lecun.png" style="width:100%"></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/5316c706-1d0d-4df1-acb1-98acda2de12e" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/f8640f33-8351-41bf-9737-b394953eb268" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/c8d191d1-6628-4134-9b62-1a8d9f112085" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/0af3f6dc-d3d9-486c-a083-ab77a8397d80" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/54f3745f-abf6-4608-93c5-d8e103d05dc7" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/273ecced-a796-4e59-a43a-217db7fb4681" type="video/mp4"></video></td>
     </tr>
     <tr>
         <td style="text-align: center"><img src="assets/gakki/gakki.png" style="width:100%"></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/d97ee268-ec58-44bc-a789-142f4c6ff138" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/90e21d5c-2c60-479e-8899-4723cbc9694d" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/53fa9136-e371-45a0-bd1a-972b50ce3c6c" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/28056aeb-5ce4-42bc-a593-877ba49834b9" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/68ad643c-8a2b-43a8-9c7b-10c36c4912d4" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/93f3891d-19c5-40fb-af21-a0b2e03d0d7f" type="video/mp4"></video></td>
     </tr>
 
 </table>
@@ -66,18 +66,18 @@ To illustrate the wide range of applications of our method, we animated 8 intern
     </tr>
     <tr>
     <td><img src="assets/memes/yao ming laugh.jpg" style="width:100%"></td>
-    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/8ad4ec22-0ee4-4a6a-ac41-d9d2a0b186db" type="video/mp4"></video></td>
+    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/984a751f-ed2b-4ce3-aef8-41056ac111cf" type="video/mp4"></video></td>
     <td><img src="assets/memes/girl burning house.jpg" style="width:100%"></td>
-    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/5a731e00-064b-413a-9e23-cf55cd519a9f" type="video/mp4"></video></td>
+    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/11c83ae1-dece-4798-baf5-e608ab8709e3" type="video/mp4"></video></td>
     </tr>
     <tr>
     <td style="text-align: center">Girl with a Pearl Earring</td><td></td><td style="text-align: center">Great Gatsby</td></td><td>
     </tr>        
     <tr>
     <td><img src="assets/memes/girl with a pearl earring.jpg" style="width:100%"></td>
-    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/f8f4bddf-5608-43eb-99ee-d154cbc57cca" type="video/mp4"></video></td>
+    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/3b773486-b87e-4331-9e5d-ec8d54e11394" type="video/mp4"></video></td>
     <td><img src="assets/memes/great gatsby.jpg" style="width:100%"></td>
-    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/5e5b67b3-0341-4f74-a4b7-b2e9b59851e1" type="video/mp4"></video></td>
+    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/db941805-8a6c-4596-ba3a-247b54baa5ef" type="video/mp4"></video></td>
     </tr>
 </table>
 
@@ -100,28 +100,28 @@ To compare with the baseline method "ID-Animator", for each video, we disable Ad
     <tr>
         <td style="text-align: center"><img src="assets/jennifer-lawrence/init images/jennifer lawrence playing guitar.jpg" style="width:100%"></td>
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/f5d0f2c6-f4bd-4517-bfa1-021db1577895" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/c7959b10-90c5-4f86-9c32-7d31027e5680" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/ea12a906-8637-4b32-97ba-c439990fec0a" type="video/mp4"></video></td>
         <td style="text-align: center"><img src="assets/jennifer-lawrence/init images/jennifer lawrence dancing.jpg" style="width:100%"></td>            
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/421f5b81-e1a7-459a-869a-f7f6dc51a74e" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/838e14fb-da0f-4e65-b537-42f8138d0145"
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/1e957f80-376b-4ca7-81ca-fa63f19a1c5a"
         type="video/mp4"></video></td>
     </tr>
     <tr>
         <td style="text-align: center"><img src="assets/yann-lecun/init images/yann lecun playing guitar.jpg" style="width:100%"></td>
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/3bbfc15b-4205-4052-b5cc-c4f8d6d17027" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/5316c706-1d0d-4df1-acb1-98acda2de12e" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/0af3f6dc-d3d9-486c-a083-ab77a8397d80" type="video/mp4"></video></td>
         <td style="text-align: center"><img src="assets/yann-lecun/init images/yann lecun dancing.jpg" style="width:100%"></td>
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/75e191f4-87e2-486c-90e7-c9e21a1bf494" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/c8d191d1-6628-4134-9b62-1a8d9f112085"
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/273ecced-a796-4e59-a43a-217db7fb4681"
          type="video/mp4"></video></td>
     </tr>
     <tr>
         <td style="text-align: center"><img src="assets/gakki/init images/gakki playing guitar.jpg" style="width:100%"></td>
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/6a5579ce-23e3-4603-8917-00a16d6a3682" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/d97ee268-ec58-44bc-a789-142f4c6ff138" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/28056aeb-5ce4-42bc-a593-877ba49834b9" type="video/mp4"></video></td>
         <td style="text-align: center"><img src="assets/gakki/init images/gakki dancing.jpg" style="width:100%"></td>
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/28082e58-a0ed-4492-8c51-cb563f92baeb" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/53fa9136-e371-45a0-bd1a-972b50ce3c6c" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/93f3891d-19c5-40fb-af21-a0b2e03d0d7f" type="video/mp4"></video></td>
     </tr>
 
 </table>
@@ -137,18 +137,18 @@ The table below compares the animated internet memes. The initial image for each
     <tr>
     <td><img src="assets/memes/yao ming laugh.jpg" style="width:100%"></td>
     <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/9daf814c-ae8a-476d-9c32-fa9ef6be16d9" type="video/mp4"></video></td>
-    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/8ad4ec22-0ee4-4a6a-ac41-d9d2a0b186db" type="video/mp4"></video></td>
+    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/984a751f-ed2b-4ce3-aef8-41056ac111cf" type="video/mp4"></video></td>
     <tr>
     <td><img src="assets/memes/girl with a pearl earring.jpg" style="width:100%"></td>
     <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/05ed29d5-4eaa-4a0a-bee2-bc77e5649f58" type="video/mp4"></video></td>
-    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/f8f4bddf-5608-43eb-99ee-d154cbc57cca" type="video/mp4"></video></td>
+    <td><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/3b773486-b87e-4331-9e5d-ec8d54e11394" type="video/mp4"></video></td>
     </tr>
 </table>
 
 We can see that the subjects in AdaFace-Animate videos have more authentic facial features and better preserve the facial expressions, while the subjects in ID-Animator videos are less authentic and faithful to the original images.
 
 ## Comparison with ID-Animator, without AdaFace Initial Images
-To exclude the effects of AdaFace, we generate a subset of videos with AdaFace-Animate / ID-Animator *without initial images*. These videos were generated under the same settings as above, except not using initial images. The table below shows a selection of the videos. The complete set of such videos can be found in [no-init](./assets/no-init/). It can be seen that without the benefit of AdaFace initial images, the performance discrepancy between AdaFace-Animate and ID-Animator becomes more pronounced.
+To exclude the effects of AdaFace, we generate a subset of videos with AdaFace-Animate / ID-Animator *without initial images*. These videos were generated under the same settings as above, except not using initial images. The table below shows a selection of the videos. The complete set of such videos can be found in [no-init](./assets/no-init/). It can be seen that without the help of AdaFace initial images, the compositionality, or the overall layout deteriorates on some prompts. In particular, some background objects are suppressed by over-expressed facial features. Moreover, the performance discrepancy between AdaFace-Animate and ID-Animator becomes more pronounced.
 
 (Hint: use the horizontal scroll bar at the bottom of the table to view the full table)
 
@@ -163,23 +163,23 @@ To exclude the effects of AdaFace, we generate a subset of videos with AdaFace-A
     <tr>
         <td style="text-align: center"><img src="assets/jennifer-lawrence/jennifer lawrence.jpg" style="width:100%"></td>
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/2c3fa70b-4a38-48d1-aead-cd94976f6beb" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/99e30845-1b15-4f4e-a8da-0028f0e46e09" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/f658f9e6-c3b6-4c4a-920c-00a89b98d97a" type="video/mp4"></video></td>
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/2de5cb38-f62c-4e9d-90ad-9bbb72d1ba7a" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/0ef028ee-4be4-4f8b-bb37-daf6c484305a" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/3b39e66d-c696-4022-81ff-6afae8147981" type="video/mp4"></video></td>
     </tr>
     <tr>
         <td style="text-align: center"><img src="assets/yann-lecun/yann lecun.png" style="width:100%"></td>
         <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/7f7f8cd0-7ca3-47b4-a44d-8c6b399bdbc4" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/f76e66c3-aba5-4cdc-808c-499730fd65db" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/c8b32a0d-eb11-4470-bb81-dc6cb034f1e8" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/2e3d6ad0-0d73-4af7-b835-c59fbea69e53" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/eb173058-2314-470a-8cf4-3702036022ad" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/cd5a9687-bae0-47fd-b82c-febc0d343ac2" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/e08c778c-5e87-40f6-a7a1-328f5d0d016f" type="video/mp4"></video></td>
     </tr>
     <tr>
         <td style="text-align: center"><img src="assets/gakki/gakki.png" style="width:100%"></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/0a512bda-aba9-4a12-9081-85d325a81d2d" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/1bb06dfa-f0d7-4387-9eca-0be7885fbf1c" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/3fcab66a-0f54-462f-a839-738e3927a100" type="video/mp4"></video></td>
-        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/158982e0-9656-411d-bbfb-d0350e1765c9" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/0370714b-d10c-422d-adee-76f6221aa1be" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/79cd95d2-95ea-4854-816e-2caf0cbebf94" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/60fa6b2a-6e1a-48c0-a777-4b62504ff679" type="video/mp4"></video></td>
+        <td style="text-align: center"><video width="100%" controls src="https://github.com/siberianlynx/video-demos/assets/77731289/c72836ee-9d7a-4525-a48a-7017b60f83f3" type="video/mp4"></video></td>
     </tr>
 
 </table>

@@ -1,5 +1,5 @@
 angry man:
-angry man
+angry man, gritting teeth
 
 boy fist:
 boy pumps one fist on a beach
@@ -19,5 +19,15 @@ man cheers with a glass of wine
 yao ming laugh:
 man laughing embarrassedly
 
+girl with a pearl earring:
+woman in a yellow shirt
+
 flip palm:
-woman raises hand
+woman raises hand, eye level shot
+
+mona lisa:
+woman smiling,  oil painting, white background
+(There are a lot of high-frequency noises introduced into the AdaFace video, so it looks less appealing than the ID-Animator video. But the authenticity is still higher.)
+
+harold:
+man walking on the beach, sunset, orange sky, bright lighting, ocean waves seagulls, rippling water, serene atmosphere, eye level shot
