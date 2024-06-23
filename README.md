@@ -205,12 +205,18 @@ Run the following command to generate an average of the three models:
 python3 scripts/avgemb.py --input models/sar/absolutereality_v181.safetensors models/sar/realisticVisionV40_v40VAE.safetensors models/sar/v1-5-pruned.safetensors --output models/sar/sar.safetensors
 ```
 
-Optionally, you can replace the VAE of the SAR model with the [MSE-840000 finetuned VAE](https://huggingface.co/stabilityai/sd-vae-ft-mse-original/tree/main) for slightly better animations:
+\[Optional Improvement\]
+1. You can replace the VAE of the SAR model with the [MSE-840000 finetuned VAE](https://huggingface.co/stabilityai/sd-vae-ft-mse-original/tree/main) for slightly better video details:
 ```
 python3 scripts/repl_vae.py --base_ckpt models/sar/sar.safetensors --vae_ckpt models/sar/vae-ft-mse-840000-ema-pruned.ckpt --out_ckpt models/sar/sar-vae.safetensors
 mv models/sar/sar-vae.safetensors models/sar/sar.safetensors
 ```
 
+2. You can replace the text encoder of the SAR model with the text encoder of [DreamShaper V8](https://civitai.com/models/4384?modelVersionId=252914) for slightly more authentic facial features:
+```
+python3 scripts/repl_textencoder.py --base_ckpt models/sar/sar.safetensors --te_ckpt models/sar/dreamshaper_8.safetensors --out_ckpt models/sar/sar2.safetensors
+mv models/sar/sar2.safetensors models/sar/sar.safetensors
+```
 ### Inference
 
 Run the demo inference scripts:
