@@ -45,7 +45,7 @@ class AdaFaceWrapper(nn.Module):
             self.negative_prompt = negative_prompt
 
     def load_subj_basis_generator(self, adaface_ckpt_path):
-        ckpt = torch.load(adaface_ckpt_path, map_location=self.device)
+        ckpt = torch.load(adaface_ckpt_path, map_location='cpu')
         string_to_subj_basis_generator_dict = ckpt["string_to_subj_basis_generator_dict"]
         if self.subject_string not in string_to_subj_basis_generator_dict:
             print(f"Subject '{self.subject_string}' not found in the embedding manager.")
@@ -138,9 +138,9 @@ class AdaFaceWrapper(nn.Module):
 
         pipeline.scheduler = noise_scheduler
         self.pipeline = pipeline.to(self.device)
-        # FaceAnalysis will try to find the ckpt in: models/arc2face/models/antelopev2. 
-        # Note the second "model" in the path.
-        self.face_app = FaceAnalysis(name='antelopev2', root='models/arc2face', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        # FaceAnalysis will try to find the ckpt in: models/insightface/models/antelopev2. 
+        # Note there's a second "model" in the path.
+        self.face_app = FaceAnalysis(name='antelopev2', root='models/insightface', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         self.face_app.prepare(ctx_id=0, det_size=(512, 512))
         # Patch the missing tokenizer in the subj_basis_generator.
         if not hasattr(self.subj_basis_generator, 'clip_tokenizer'):
