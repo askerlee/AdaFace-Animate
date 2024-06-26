@@ -713,8 +713,8 @@ def convert_ldm_bert_checkpoint(checkpoint, config):
     return hf_model
 
 
-def convert_ldm_clip_checkpoint(checkpoint):
-    text_model = CLIPTextModel.from_pretrained("animatediff/sd/text_encoder")
+def convert_ldm_clip_checkpoint(checkpoint, dtype=torch.float16):
+    text_model = CLIPTextModel.from_pretrained("animatediff/sd/text_encoder", torch_dtype=dtype)
     keys = list(checkpoint.keys())
 
     text_model_dict = {}

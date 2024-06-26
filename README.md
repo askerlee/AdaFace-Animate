@@ -8,7 +8,7 @@ Please refer to our NeurIPS 2024 submission for more details about AdaFace:
 **AdaFace: A Versatile Face Encoder for Zero-Shot Diffusion Model Personalization** 
 </br>
 
-[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97 Hugging Face-Spaces-yellow)](https://huggingface.co/spaces/adaface-neurips/adaface-animate)
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-yellow)](https://huggingface.co/spaces/adaface-neurips/adaface-animate)
 
 This pipeline uses 4 pretrained models: [Stable Diffusion V1.5](https://huggingface.co/runwayml/stable-diffusion-v1-5), [AnimateDiff v3](https://github.com/guoyww/animatediff), [ID-Animator](https://github.com/ID-Animator/ID-Animator) and [AdaFace](https://huggingface.co/adaface-neurips/adaface).
 

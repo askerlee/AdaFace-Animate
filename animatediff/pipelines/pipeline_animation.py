@@ -42,7 +42,7 @@ def preprocess_image(image, h=512, w=512):
     elif isinstance(image, PIL.Image.Image):
         # image: [1, 512, 512, 3]
         image = np.array(image.resize((w, h), resample=PIL.Image.LANCZOS))[None, :]
-        image = image.astype(np.float32) * 2 / 255.0 - 1.0
+        image = image.astype(np.float16) * 2 / 255.0 - 1.0
         # image: [1, 3, 512, 512]
         image = image.transpose(0, 3, 1, 2)
         image = torch.from_numpy(image)
@@ -665,7 +665,7 @@ class AnimationPipeline(DiffusionPipeline):
     ):
         # Default height and width to unet
         height = height or self.unet.config.sample_size * self.vae_scale_factor
-        width = width or self.unet.config.sample_size * self.vae_scale_factor
+        width  = width  or self.unet.config.sample_size * self.vae_scale_factor
 
         # Check inputs. Raise error if not correct
         self.check_inputs(prompt, height, width, callback_steps, prompt_embeds)
@@ -694,6 +694,7 @@ class AnimationPipeline(DiffusionPipeline):
             )
         else:
             text_embeddings = torch.cat([negative_prompt_embeds, prompt_embeds])
+
         # print(text_embeddings.shape)
         # return
         # Prepare timesteps

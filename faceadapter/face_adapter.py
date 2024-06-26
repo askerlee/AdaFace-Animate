@@ -278,7 +278,7 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
             prompt = [prompt] * num_prompts
         if not isinstance(negative_prompt, List):
             negative_prompt = [negative_prompt] * num_prompts
-        num_prompt_img  =len(pil_image)
+        num_prompt_img  = len(pil_image)
         total_image_prompt_embeds = 0
         for i in range(num_prompt_img):
             prompt_img = pil_image[i]
@@ -289,7 +289,7 @@ class FaceAdapterPlusForVideoLora(FaceAdapterLora):
             image_prompt_embeds = image_prompt_embeds.repeat(1, num_samples, 1)
             image_prompt_embeds = image_prompt_embeds.view(bs_embed * num_samples, seq_len, -1)
             total_image_prompt_embeds += image_prompt_embeds
-        total_image_prompt_embeds/=num_prompt_img
+        total_image_prompt_embeds /= num_prompt_img
         image_prompt_embeds  = total_image_prompt_embeds
         uncond_image_prompt_embeds = uncond_image_prompt_embeds.repeat(1, num_samples, 1)
         uncond_image_prompt_embeds = uncond_image_prompt_embeds.view(bs_embed * num_samples, seq_len, -1)

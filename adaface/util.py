@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from PIL import Image
@@ -21,6 +22,54 @@ def add_noise_to_tensor(ts, noise_std, noise_std_is_relative=True, keep_norm=Fal
         ts = ts + noise
         
     return ts
+
+
+# Revised from RevGrad, by removing the grad negation.
+class ScaleGrad(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input_, alpha_, debug=False):
+        ctx.save_for_backward(alpha_, debug)
+        output = input_
+        if debug:
+            print(f"input: {input_.abs().mean().item()}")
+        return output
+
+    @staticmethod
+    def backward(ctx, grad_output):  # pragma: no cover
+        # saved_tensors returns a tuple of tensors.
+        alpha_, debug = ctx.saved_tensors
+        if ctx.needs_input_grad[0]:
+            grad_output2 = grad_output * alpha_
+            if debug:
+                print(f"grad_output2: {grad_output2.abs().mean().item()}")
+        else:
+            grad_output2 = None
+        return grad_output2, None, None
+
+class GradientScaler(nn.Module):
+    def __init__(self, alpha=1., debug=False, *args, **kwargs):
+        """
+        A gradient scaling layer.
+        This layer has no parameters, and simply scales the gradient in the backward pass.
+        """
+        super().__init__(*args, **kwargs)
+
+        self._alpha = torch.tensor(alpha, requires_grad=False)
+        self._debug = torch.tensor(debug, requires_grad=False)
+
+    def forward(self, input_):
+        _debug = self._debug if hasattr(self, '_debug') else False
+        return ScaleGrad.apply(input_, self._alpha.to(input_.device), _debug)
+
+def gen_gradient_scaler(alpha, debug=False):
+    if alpha == 1:
+        return nn.Identity()
+    if alpha > 0:
+        return GradientScaler(alpha, debug=debug)
+    else:
+        assert alpha == 0
+        # Don't use lambda function here, otherwise the object can't be pickled.
+        return torch.detach
 
 #@torch.autocast(device_type="cuda")
 # In AdaFaceWrapper, input_max_length is 22.
@@ -235,14 +284,14 @@ def get_arc2face_id_prompt_embs(face_app, clip_tokenizer, arc2face_text_encoder,
                 print(f"Extracted ID embeddings from {image_count} images")
 
         if len(faceid_embeds) == 0:
-            print("No face detected")
-            breakpoint()
-
-        # faceid_embeds: [10, 512]
-        faceid_embeds = torch.cat(faceid_embeds, dim=0)
-        # faceid_embeds: [10, 512] -> [1, 512].
-        # and the resulted prompt embeddings are the same.
-        faceid_embeds = faceid_embeds.mean(dim=0, keepdim=True).to(torch.float16).to(device)
+            print("No face detected. Use a random face instead.")
+            faceid_embeds = torch.randn(id_batch_size, 512).to(device=device, dtype=torch.float16)
+        else:
+            # faceid_embeds: [10, 512]
+            faceid_embeds = torch.cat(faceid_embeds, dim=0)
+            # faceid_embeds: [10, 512] -> [1, 512].
+            # and the resulted prompt embeddings are the same.
+            faceid_embeds = faceid_embeds.mean(dim=0, keepdim=True).to(device=device, dtype=torch.float16)
     else:
         # Random face embeddings. faceid_embeds: [BS, 512].
         if pre_face_embs is None:
@@ -252,7 +301,7 @@ def get_arc2face_id_prompt_embs(face_app, clip_tokenizer, arc2face_text_encoder,
             if pre_face_embs.shape[0] == 1:
                 faceid_embeds = faceid_embeds.repeat(id_batch_size, 1)
 
-        faceid_embeds = faceid_embeds.to(torch.float16).to(device)
+        faceid_embeds = faceid_embeds.to(device=device, dtype=torch.float16)
 
     if noise_level > 0:
         # If id_batch_size > 1, after adding noises, the id_batch_size embeddings will be different.

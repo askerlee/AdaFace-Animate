@@ -17,7 +17,7 @@ def load_adaface(base_model_path, adaface_ckpt_path, device="cuda"):
     return adaface
 
 def load_model(base_model_type="sar", adaface_base_model_type="sar", 
-               adaface_ckpt_path=None, device="cuda:0"):
+               adaface_ckpt_path=None, device="cuda"):
     inference_config    = "inference-v2.yaml"
     sd_version          = "animatediff/sd"
     id_ckpt             = "models/animator.ckpt"
@@ -53,6 +53,9 @@ def load_model(base_model_type="sar", adaface_base_model_type="sar",
     ).to(device=device)
     unet = UNet3DConditionModel.from_pretrained_2d(sd_version, subfolder="unet", unet_additional_kwargs=OmegaConf.to_container(inference_config.unet_additional_kwargs)
     ).to(device=device)
+    # unet.to(dtype=torch.float16) does not work on hf spaces.
+    unet = unet.half()
+
     pipeline = AnimationPipeline(
             vae=vae, text_encoder=text_encoder, tokenizer=tokenizer, unet=unet,
             controlnet=None,
@@ -61,8 +64,7 @@ def load_model(base_model_type="sar", adaface_base_model_type="sar",
             # scheduler=DPMSolverMultistepScheduler(**OmegaConf.to_container(inference_config.DPMSolver_scheduler_kwargs)
             # scheduler=EulerAncestralDiscreteScheduler(**OmegaConf.to_container(inference_config.noise_scheduler_kwargs)
             # scheduler=EulerAncestralDiscreteScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="linear",steps_offset=1
-
-    ),torch_dtype=torch.float16,
+                                   ),torch_dtype=torch.float16,
             ).to(device=device)
     
     pipeline = load_weights(
@@ -78,6 +80,7 @@ def load_model(base_model_type="sar", adaface_base_model_type="sar",
             lora_model_path            = "",
             lora_alpha                 = 0.8
     ).to(device=device)
+    
     if base_model_path != "":
         print(f"load dreambooth model from {base_model_path}")
         dreambooth_state_dict = {}
@@ -109,7 +112,7 @@ def load_model(base_model_type="sar", adaface_base_model_type="sar",
             converted_unet_checkpoint = convert_ldm_unet_checkpoint(dreambooth_state_dict, pipeline.unet.config)
             pipeline.unet.load_state_dict(converted_unet_checkpoint, strict=False)
 
-            pipeline.text_encoder = convert_ldm_clip_checkpoint(dreambooth_state_dict).to(device=device)
+            pipeline.text_encoder = convert_ldm_clip_checkpoint(dreambooth_state_dict, dtype=torch.float16).to(device=device)
             
         del dreambooth_state_dict
         pipeline = pipeline.to(torch.float16)
