@@ -25,7 +25,7 @@ parser.add_argument('--adaface_ckpt_path', type=str,
 # Don't use 'sd15' for base_model_type; it just generates messy videos.
 parser.add_argument('--base_model_type', type=str, default='sar')
 parser.add_argument('--adaface_base_model_type', type=str, default='sar')
-parser.add_argument('--gpu', type=int, default=0)
+parser.add_argument('--gpu', type=int, default=None)
 parser.add_argument('--ip', type=str, default="0.0.0.0")
 args = parser.parse_args()
 
@@ -37,13 +37,14 @@ def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
 # model = load_model()
 # This FaceAnalysis uses a different model from what AdaFace uses, but it's fine.
 # This is just to crop the face areas from the uploaded images.
-app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-app.prepare(ctx_id=args.gpu, det_size=(320, 320))
+app = FaceAnalysis(name="buffalo_l", root='models/insightface', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+app.prepare(ctx_id=0, det_size=(320, 320))
+device = "cuda" if args.gpu is None else f"cuda:{args.gpu}"
 
 id_animator, adaface = load_model(base_model_type=args.base_model_type, 
                                   adaface_base_model_type=args.adaface_base_model_type,
                                   adaface_ckpt_path=args.adaface_ckpt_path, 
-                                  device=f"cuda:{args.gpu}")
+                                  device=device)
 basedir     = os.getcwd()
 savedir     = os.path.join(basedir,'samples')
 os.makedirs(savedir, exist_ok=True)
@@ -93,7 +94,7 @@ def gen_init_images(uploaded_image_paths, prompt, adaface_id_cfg_scale, out_imag
     # Update uploaded_init_img_gallery, update and hide init_img_files, hide init_clear_button_column
     return gr.update(value=face_paths, visible=True), gr.update(value=face_paths, visible=False), gr.update(visible=True)
 
-@spaces.GPU
+@spaces.GPU(duration=90)
 def generate_image(image_container, uploaded_image_paths, init_img_file_paths, init_img_selected_idx, 
                    init_image_strength, init_image_final_weight,
                    prompt, negative_prompt, num_steps, video_length, guidance_scale, seed, attn_scale, image_embed_scale,
@@ -228,13 +229,14 @@ with gr.Blocks(css=css) as demo:
     ❗️❗️❗️**Tips:**
     - You can upload one or more subject images for generating ID-specific video.
     - Try different parameter combinations for the best generation quality.
+    - Technical explanations and demo videos: [Readme](https://huggingface.co/spaces/adaface-neurips/adaface-animate/blob/main/README2.md).
         """
     )
 
     with gr.Row():
         with gr.Column():
             files = gr.File(
-                        label="Drag (Select) 1 or more photos of a person's face",
+                        label="Drag / Select 1 or more photos of a person's face",
                         file_types=["image"],
                         file_count="multiple"
                     )
@@ -244,7 +246,7 @@ with gr.Blocks(css=css) as demo:
                 remove_and_reupload = gr.ClearButton(value="Remove and upload subject images", components=files, size="sm")
 
             init_img_files = gr.File(
-                            label="Drag (Select) 1 image for initialization",
+                            label="[Optional] Select 1 image for initialization, or generate 3 images with the button below and select 1",
                             file_types=["image"],
                             file_count="multiple"
                     )
@@ -257,6 +259,7 @@ with gr.Blocks(css=css) as demo:
 
             init_image_strength = gr.Slider(
                     label="Init Image Strength",
+                    info="How much the init image should influence each frame. 0: no influence (scenes are more dynamic), 3: strongest influence (scenes are more static).",
                     minimum=0,
                     maximum=3,
                     step=0.25,
@@ -264,6 +267,7 @@ with gr.Blocks(css=css) as demo:
                 )
             init_image_final_weight = gr.Slider(
                     label="Final Weight of the Init Image",
+                    info="How much the init image should influence the end of the video",
                     minimum=0,
                     maximum=0.25,
                     step=0.025,
@@ -276,11 +280,12 @@ with gr.Blocks(css=css) as demo:
                 gen_init = gr.Button(value="Generate 3 new init images")
 
             prompt = gr.Textbox(label="Prompt",
-                    #    info="Try something like 'a photo of a man/woman img', 'img' is the trigger word.",
-                       placeholder="Iron Man soars through the clouds, his repulsors blazing.")
+                       info="Try something like 'man/woman walking on the beach'",
+                       placeholder="woman playing guitar on a boat, ocean waves")
            
             image_embed_scale = gr.Slider(
                     label="Image Embedding Scale",
+                    info="The scale of the ID-Animator image embedding (influencing coarse facial features and poses)",
                     minimum=0,
                     maximum=2,
                     step=0.1,
@@ -288,6 +293,7 @@ with gr.Blocks(css=css) as demo:
                 )
             attn_scale = gr.Slider(
                     label="Attention Processor Scale",
+                    info="The scale of the ID embeddings on the attention (the higher, the more focus on the face, less on the background)" ,
                     minimum=0,
                     maximum=2,
                     step=0.1,
@@ -295,6 +301,7 @@ with gr.Blocks(css=css) as demo:
                 )
             adaface_id_cfg_scale = gr.Slider(
                     label="AdaFace Embedding ID CFG Scale",
+                    info="The scale of the AdaFace ID embeddings (influencing fine facial features and details)",
                     minimum=0.5,
                     maximum=6,
                     step=0.25,
@@ -306,12 +313,15 @@ with gr.Blocks(css=css) as demo:
             with gr.Accordion(open=False, label="Advanced Options"):
                 video_length = gr.Slider(
                     label="video_length",
+                    info="Do not change, otherwise the video will be messy",
                     minimum=16,
                     maximum=21,
                     step=1,
                     value=16,
                 )
-                is_adaface_enabled = gr.Checkbox(label="Enable AdaFace", value=True)
+                is_adaface_enabled = gr.Checkbox(label="Enable AdaFace", 
+                                                 info="Enable AdaFace for better face details. If unchecked, it falls back to ID-Animator (https://huggingface.co/spaces/ID-Animator/ID-Animator).",
+                                                 value=True)
                 adaface_ckpt_path = gr.Textbox(
                     label="AdaFace ckpt Path", 
                     placeholder=args.adaface_ckpt_path,
@@ -320,6 +330,7 @@ with gr.Blocks(css=css) as demo:
 
                 adaface_power_scale = gr.Slider(
                         label="AdaFace Embedding Power Scale",
+                        info="Increase this scale slightly only if the face is defocused or the face details are not clear",
                         minimum=0.7,
                         maximum=1.3,
                         step=0.1,

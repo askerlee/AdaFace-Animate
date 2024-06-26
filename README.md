@@ -202,7 +202,7 @@ Manually download the three `.safetensors` models: the original [Stable Diffusio
 
 Run the following command to generate an average of the three models:
 ```
-python3 scripts/avgemb.py --input models/sar/absolutereality_v181.safetensors models/sar/realisticVisionV40_v40VAE.safetensors models/sar/v1-5-pruned.safetensors --output models/sar/sar.safetensors
+python3 scripts/avg_models.py --input models/sar/absolutereality_v181.safetensors models/sar/realisticVisionV40_v40VAE.safetensors models/sar/v1-5-pruned.safetensors --output models/sar/sar.safetensors
 ```
 
 \[Optional Improvement\]

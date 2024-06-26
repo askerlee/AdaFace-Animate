@@ -1,11 +1,11 @@
+torch
+torchvision
 imageio
 imageio-ffmpeg
 accelerate
 einops
 gradio
 transformers
-torch
-torchvision
 wandb
 insightface
 omegaconf
@@ -13,3 +13,5 @@ opencv-python
 diffusers
 onnx>=1.16.0
 onnxruntime
+safetensors
+spaces

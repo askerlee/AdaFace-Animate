@@ -144,7 +144,7 @@ class AdaFaceWrapper(nn.Module):
         self.face_app.prepare(ctx_id=0, det_size=(512, 512))
         # Patch the missing tokenizer in the subj_basis_generator.
         if not hasattr(self.subj_basis_generator, 'clip_tokenizer'):
-            self.subj_basis_generator.clip_tokenizer = pipeline.tokenizer
+            self.subj_basis_generator.clip_tokenizer = self.pipeline.tokenizer
             print("Patched the missing tokenizer in the subj_basis_generator.")
 
     def extend_tokenizer_and_text_encoder(self):
@@ -172,10 +172,10 @@ class AdaFaceWrapper(nn.Module):
         self.placeholder_token_ids = tokenizer.convert_tokens_to_ids(self.placeholder_tokens)
         # print(self.placeholder_token_ids)
         # Resize the token embeddings as we are adding new special tokens to the tokenizer
-        old_weight_shape = self.pipeline.text_encoder.get_input_embeddings().weight.data.shape
+        old_weight = self.pipeline.text_encoder.get_input_embeddings().weight
         self.pipeline.text_encoder.resize_token_embeddings(len(tokenizer))
-        new_weight_shape = self.pipeline.text_encoder.get_input_embeddings().weight.data.shape
-        print(f"Resized text encoder token embeddings from {old_weight_shape} to {new_weight_shape}.")
+        new_weight = self.pipeline.text_encoder.get_input_embeddings().weight
+        print(f"Resized text encoder token embeddings from {old_weight.shape} to {new_weight.shape} on {new_weight.device}.")
 
     # Extend pipeline.text_encoder with the adaface subject emeddings.
     # subj_embs: [16, 768].
@@ -248,28 +248,33 @@ class AdaFaceWrapper(nn.Module):
             self.update_text_encoder_subj_embs(adaface_subj_embs)
         return adaface_subj_embs
 
-    def encode_prompt(self, prompt, verbose=False):
+    def encode_prompt(self, prompt, device="cuda", verbose=False):
         prompt = self.update_prompt(prompt)
         if verbose:
             print(f"Prompt: {prompt}")
+
+        # For some unknown reason, the text_encoder is still on CPU after self.pipeline.to(self.device).
+        # So we manually move it to GPU here.
+        self.pipeline.text_encoder.to(device)
         # prompt_embeds_, negative_prompt_embeds_: [1, 77, 768]
         prompt_embeds_, negative_prompt_embeds_ = \
-            self.pipeline.encode_prompt(prompt, device=self.device, num_images_per_prompt=1,
+            self.pipeline.encode_prompt(prompt, device=device, num_images_per_prompt=1,
                                         do_classifier_free_guidance=True, negative_prompt=self.negative_prompt)
         return prompt_embeds_, negative_prompt_embeds_
     
     # ref_img_strength is used only in the img2img pipeline.
     def forward(self, noise, prompt, guidance_scale=4.0, out_image_count=4, ref_img_strength=0.8, verbose=False):
         # prompt_embeds_, negative_prompt_embeds_: [1, 77, 768]
-        prompt_embeds_, negative_prompt_embeds_ = self.encode_prompt(prompt, verbose=verbose)
+        prompt_embeds_, negative_prompt_embeds_ = self.encode_prompt(prompt, device=self.device, verbose=verbose)
 
         # Repeat the prompt embeddings for all images in the batch.
         prompt_embeds_          = prompt_embeds_.repeat(out_image_count, 1, 1)
         negative_prompt_embeds_ = negative_prompt_embeds_.repeat(out_image_count, 1, 1)
-
+        noise = noise.to(self.device).to(torch.float16)
+        
         # noise: [BS, 4, 64, 64]
         # When the pipeline is text2img, strength is ignored.
-        images = self.pipeline(image=noise.to(self.device),
+        images = self.pipeline(image=noise,
                                prompt_embeds=prompt_embeds_, 
                                negative_prompt_embeds=negative_prompt_embeds_, 
                                num_inference_steps=self.num_inference_steps, 
