@@ -12,6 +12,8 @@ from insightface.app import FaceAnalysis
 from adaface.arc2face_models import CLIPTextModelWrapper
 from adaface.util import get_arc2face_id_prompt_embs
 import re, os
+import sys
+sys.modules['ldm'] = sys.modules['adaface']
 
 class AdaFaceWrapper(nn.Module):
     def __init__(self, pipeline_name, base_model_path, adaface_ckpt_path, device, 
@@ -216,7 +218,7 @@ class AdaFaceWrapper(nn.Module):
         # NOTE: Since return_core_id_embs is True, id_prompt_emb is only the 16 core ID embeddings.
         # arc2face prompt template: "photo of a id person"
         # ID embeddings start from "id person ...". So there are 3 template tokens before the 16 ID embeddings.
-        faceid_embeds, id_prompt_emb \
+        face_image_count, faceid_embeds, id_prompt_emb \
             = get_arc2face_id_prompt_embs(self.face_app, self.pipeline.tokenizer, self.arc2face_text_encoder,
                                           extract_faceid_embeds=not gen_rand_face,
                                           pre_face_embs=pre_face_embs,
@@ -235,6 +237,9 @@ class AdaFaceWrapper(nn.Module):
                                           gen_neg_prompt=False, 
                                           verbose=True)
         
+        if face_image_count == 0:
+            return None
+                
         # adaface_subj_embs: [1, 1, 16, 768]. 
         # adaface_prompt_embs: [1, 77, 768] (not used).
         adaface_subj_embs, adaface_prompt_embs = \
@@ -248,7 +253,13 @@ class AdaFaceWrapper(nn.Module):
             self.update_text_encoder_subj_embs(adaface_subj_embs)
         return adaface_subj_embs
 
-    def encode_prompt(self, prompt, device="cuda", verbose=False):
+    def encode_prompt(self, prompt, negative_prompt=None, device=None, verbose=False):
+        if negative_prompt is None:
+            negative_prompt = self.negative_prompt
+        
+        if device is None:
+            device = self.device
+            
         prompt = self.update_prompt(prompt)
         if verbose:
             print(f"Prompt: {prompt}")
@@ -259,14 +270,16 @@ class AdaFaceWrapper(nn.Module):
         # prompt_embeds_, negative_prompt_embeds_: [1, 77, 768]
         prompt_embeds_, negative_prompt_embeds_ = \
             self.pipeline.encode_prompt(prompt, device=device, num_images_per_prompt=1,
-                                        do_classifier_free_guidance=True, negative_prompt=self.negative_prompt)
+                                        do_classifier_free_guidance=True, negative_prompt=negative_prompt)
         return prompt_embeds_, negative_prompt_embeds_
     
     # ref_img_strength is used only in the img2img pipeline.
-    def forward(self, noise, prompt, guidance_scale=4.0, out_image_count=4, ref_img_strength=0.8, verbose=False):
+    def forward(self, noise, prompt, negative_prompt=None, guidance_scale=4.0, 
+                out_image_count=4, ref_img_strength=0.8, generator=None, verbose=False):
+        if negative_prompt is None:
+            negative_prompt = self.negative_prompt
         # prompt_embeds_, negative_prompt_embeds_: [1, 77, 768]
-        prompt_embeds_, negative_prompt_embeds_ = self.encode_prompt(prompt, device=self.device, verbose=verbose)
-
+        prompt_embeds_, negative_prompt_embeds_ = self.encode_prompt(prompt, negative_prompt, device=self.device, verbose=verbose)
         # Repeat the prompt embeddings for all images in the batch.
         prompt_embeds_          = prompt_embeds_.repeat(out_image_count, 1, 1)
         negative_prompt_embeds_ = negative_prompt_embeds_.repeat(out_image_count, 1, 1)
@@ -280,7 +293,8 @@ class AdaFaceWrapper(nn.Module):
                                num_inference_steps=self.num_inference_steps, 
                                guidance_scale=guidance_scale, 
                                num_images_per_prompt=1,
-                               strength=ref_img_strength).images
+                               strength=ref_img_strength,
+                               generator=generator).images
         # images: [BS, 3, 512, 512]
         return images
     
