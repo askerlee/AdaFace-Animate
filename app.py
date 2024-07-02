@@ -76,8 +76,15 @@ def gen_init_images(uploaded_image_paths, prompt, adaface_id_cfg_scale, out_imag
     # [('/tmp/gradio/249981e66a7c665aaaf1c7eaeb24949af4366c88/jensen huang.jpg', None)]
     # Extract the file paths.
     uploaded_image_paths = [path[0] for path in uploaded_image_paths]
-    adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
-                                        out_id_embs_scale=adaface_id_cfg_scale, update_text_encoder=True)
+    # gen_init_images() uses a larger adaface_id_cfg_scale to generate more authentic faces.
+    adaface_id_cfg_scale_ = min(6, adaface_id_cfg_scale * 2)
+    adaface_subj_embs = \
+        adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
+                                            out_id_embs_scale=adaface_id_cfg_scale_, update_text_encoder=True)
+    
+    if adaface_subj_embs is None:
+        raise gr.Error(f"Failed to detect any faces! Please try with other images")
+        
     # Generate two images each time for the user to select from.
     noise = torch.randn(out_image_count, 3, 512, 512)
     # samples: A list of PIL Image instances.
@@ -163,7 +170,7 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_paths, i
     save_videos_grid(sample, save_sample_path)
     return save_sample_path
 
-def validate(prompt):
+def validate_prompt(prompt):
     if not prompt:
         raise gr.Error("Prompt cannot be blank")
 
@@ -226,10 +233,19 @@ with gr.Blocks(css=css) as demo:
     )
     gr.Markdown(
         """
-    ❗️❗️❗️**Tips:**
-    - You can upload one or more subject images for generating ID-specific video.
-    - Try different parameter combinations for the best generation quality.
-    - Technical explanations and demo videos: [Readme](https://huggingface.co/spaces/adaface-neurips/adaface-animate/blob/main/README2.md).
+<b>Official demo</b> for our NeurIPS 2024 submission <b>AdaFace: A Versatile Face Encoder for Zero-Shot Diffusion Model Personalization</b>.<br>
+
+❗️**Tips**❗️
+- You can upload one or more subject images for generating ID-specific video.
+- Try different parameter combinations for the best generation quality.
+- Usage explanations and demos: [Readme](https://huggingface.co/spaces/adaface-neurips/adaface-animate/blob/main/README2.md).
+- AdaFace Text-to-Image: <a href="https://huggingface.co/spaces/adaface-neurips/adaface" style="display: inline-flex; align-items: center;">
+  AdaFace 
+  <img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-yellow" alt="Hugging Face Spaces" style="margin-left: 5px;">
+  </a>
+
+**TODO:**
+- ControlNet integration.
         """
     )
 
@@ -241,7 +257,7 @@ with gr.Blocks(css=css) as demo:
                         file_count="multiple"
                     )
             image_container = gr.Image(label="image container", sources="upload", type="numpy", height=256, visible=False)
-            uploaded_files_gallery = gr.Gallery(label="Your images", visible=False, columns=5, rows=1, height=200)
+            uploaded_files_gallery = gr.Gallery(label="Subject images", visible=False, columns=3, rows=1, height=300)
             with gr.Column(visible=False) as clear_button_column:
                 remove_and_reupload = gr.ClearButton(value="Remove and upload subject images", components=files, size="sm")
 
@@ -279,12 +295,26 @@ with gr.Blocks(css=css) as demo:
             with gr.Column(visible=True) as init_gen_button_column:
                 gen_init = gr.Button(value="Generate 3 new init images")
 
-            prompt = gr.Textbox(label="Prompt",
-                       info="Try something like 'man/woman walking on the beach'",
-                       placeholder="woman playing guitar on a boat, ocean waves")
-           
+            prompt = gr.Dropdown(label="Prompt",
+                       info="Try something like 'man/woman walking on the beach'. If the face is not in focus, try adding 'face portrait of' at the beginning.",
+                       value=None,
+                       allow_custom_value=True,
+                       filterable=False,
+                       choices=[
+                            "woman ((best quality)), ((masterpiece)), ((realistic)), long highlighted hair, futuristic silver armor suit, confident stance, high-resolution, living room, smiling, head tilted, perfect smooth skin",
+                            "woman walking on the beach, sunset, orange sky, eye level shot",
+                            "woman in a white apron and chef hat, garnishing a gourmet dish, full body view, long shot",
+                            "woman dancing pose among folks in a park, waving hands",
+                            "woman in iron man costume flying pose, the sky ablaze with hues of orange and purple, full body view, long shot",
+                            "woman jedi wielding a lightsaber, star wars, full body view, eye level shot",
+                            "woman playing guitar on a boat, ocean waves",
+                            "woman with a passion for reading, curled up with a book in a cozy nook near a window",
+                            "woman running pose in a park, eye level shot",
+                            "woman in superman costume flying pose, the sky ablaze with hues of orange and purple, full body view, long shot"
+                       ])
+            
             image_embed_scale = gr.Slider(
-                    label="Image Embedding Scale",
+                    label="ID-Animator Image Embedding Scale",
                     info="The scale of the ID-Animator image embedding (influencing coarse facial features and poses)",
                     minimum=0,
                     maximum=2,
@@ -300,8 +330,8 @@ with gr.Blocks(css=css) as demo:
                     value=0.8,
                 )
             adaface_id_cfg_scale = gr.Slider(
-                    label="AdaFace Embedding ID CFG Scale",
-                    info="The scale of the AdaFace ID embeddings (influencing fine facial features and details)",
+                    label="AdaFace CFG Scale",
+                    info="The CFG scale of the AdaFace ID embeddings (influencing fine facial features)",
                     minimum=0.5,
                     maximum=6,
                     step=0.25,
@@ -318,12 +348,13 @@ with gr.Blocks(css=css) as demo:
                     maximum=21,
                     step=1,
                     value=16,
+                    interactive=False,
                 )
                 is_adaface_enabled = gr.Checkbox(label="Enable AdaFace", 
                                                  info="Enable AdaFace for better face details. If unchecked, it falls back to ID-Animator (https://huggingface.co/spaces/ID-Animator/ID-Animator).",
                                                  value=True)
                 adaface_ckpt_path = gr.Textbox(
-                    label="AdaFace ckpt Path", 
+                    label="AdaFace checkpoint path", 
                     placeholder=args.adaface_ckpt_path,
                     value=args.adaface_ckpt_path,
                 )
@@ -331,8 +362,8 @@ with gr.Blocks(css=css) as demo:
                 adaface_power_scale = gr.Slider(
                         label="AdaFace Embedding Power Scale",
                         info="Increase this scale slightly only if the face is defocused or the face details are not clear",
-                        minimum=0.7,
-                        maximum=1.3,
+                        minimum=0.8,
+                        maximum=1.2,
                         step=0.1,
                         value=1,
                     )
@@ -353,14 +384,14 @@ with gr.Blocks(css=css) as demo:
                     value="face portrait, (deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime), text, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, bare breasts, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, long neck, UnrealisticDream",
                 )
                 num_steps = gr.Slider( 
-                    label="Number of sample steps",
+                    label="Number of sampling steps",
                     minimum=25,
                     maximum=100,
                     step=1,
                     value=40,
                 )
                 guidance_scale = gr.Slider(
-                    label="Guidance scale",
+                    label="Guidance scale (usually you don't need to change)",
                     minimum=1.0,
                     maximum=10.0,
                     step=0.5,
@@ -373,7 +404,8 @@ with gr.Blocks(css=css) as demo:
                     step=1,
                     value=985,
                 )
-                randomize_seed = gr.Checkbox(label="Randomize seed", value=False)
+                randomize_seed = gr.Checkbox(label="Randomize seed", value=False, info="Uncheck for reproducible results")
+
         with gr.Column():
             result_video = gr.Video(label="Generated Animation", interactive=False)
         
@@ -387,7 +419,7 @@ with gr.Blocks(css=css) as demo:
                        outputs=[uploaded_init_img_gallery, init_img_files, init_clear_button_column])
         uploaded_init_img_gallery.select(fn=get_clicked_image, inputs=None, outputs=init_img_selected_idx)
 
-        submit.click(fn=validate,
+        submit.click(fn=validate_prompt,
                      inputs=[prompt],outputs=None).success(
             fn=randomize_seed_fn,
             inputs=[seed, randomize_seed],

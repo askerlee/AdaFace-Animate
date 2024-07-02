@@ -64,7 +64,8 @@ def load_model(base_model_type="sar", adaface_base_model_type="sar",
             # scheduler=DPMSolverMultistepScheduler(**OmegaConf.to_container(inference_config.DPMSolver_scheduler_kwargs)
             # scheduler=EulerAncestralDiscreteScheduler(**OmegaConf.to_container(inference_config.noise_scheduler_kwargs)
             # scheduler=EulerAncestralDiscreteScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="linear",steps_offset=1
-                                   ),torch_dtype=torch.float16,
+                                   ),
+            torch_dtype=torch.float16,
             ).to(device=device)
     
     pipeline = load_weights(
