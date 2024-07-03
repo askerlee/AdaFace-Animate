@@ -84,7 +84,7 @@ class AdaFaceWrapper(nn.Module):
         if self.use_ds_text_encoder:
             # The dreamshaper v7 finetuned text encoder follows the prompt slightly better than the original text encoder.
             # https://huggingface.co/Lykon/DreamShaper/tree/main/text_encoder
-            text_encoder = CLIPTextModel.from_pretrained("models/ds_text_encoder", torch_dtype=torch.float16)
+            text_encoder = CLIPTextModel.from_pretrained("models/diffusers/ds_text_encoder", torch_dtype=torch.float16)
         else:
             text_encoder = None
 
@@ -267,10 +267,22 @@ class AdaFaceWrapper(nn.Module):
         # For some unknown reason, the text_encoder is still on CPU after self.pipeline.to(self.device).
         # So we manually move it to GPU here.
         self.pipeline.text_encoder.to(device)
-        # prompt_embeds_, negative_prompt_embeds_: [1, 77, 768]
-        prompt_embeds_, negative_prompt_embeds_ = \
-            self.pipeline.encode_prompt(prompt, device=device, num_images_per_prompt=1,
-                                        do_classifier_free_guidance=True, negative_prompt=negative_prompt)
+        # Compatible with older versions of diffusers.
+        if not hasattr(self.pipeline, "encode_prompt"):
+            # prompt_embeds_, negative_prompt_embeds_: [77, 768] -> [1, 77, 768].
+            prompt_embeds_, negative_prompt_embeds_ = \
+                self.pipeline._encode_prompt(prompt, device=device, num_images_per_prompt=1,
+                                             do_classifier_free_guidance=True, negative_prompt=negative_prompt)
+            prompt_embeds_ = prompt_embeds_.unsqueeze(0)
+            negative_prompt_embeds_ = negative_prompt_embeds_.unsqueeze(0)
+        else:
+            # prompt_embeds_, negative_prompt_embeds_: [1, 77, 768]
+            prompt_embeds_, negative_prompt_embeds_ = \
+                self.pipeline.encode_prompt(prompt, device=device, 
+                                            num_images_per_prompt=1, 
+                                            do_classifier_free_guidance=True,
+                                            negative_prompt=negative_prompt)
+
         return prompt_embeds_, negative_prompt_embeds_
     
     # ref_img_strength is used only in the img2img pipeline.

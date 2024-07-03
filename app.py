@@ -88,7 +88,8 @@ def gen_init_images(uploaded_image_paths, prompt, adaface_id_cfg_scale, out_imag
     # Generate two images each time for the user to select from.
     noise = torch.randn(out_image_count, 3, 512, 512)
     # samples: A list of PIL Image instances.
-    samples = adaface(noise, prompt, out_image_count=out_image_count, verbose=True)
+    with torch.no_grad():
+        samples = adaface(noise, prompt, out_image_count=out_image_count, verbose=True)
 
     face_paths = []
     for sample in samples:        
@@ -130,10 +131,11 @@ def generate_image(image_container, uploaded_image_paths, init_img_file_paths, i
             # Reload the embedding manager
             adaface.load_subj_basis_generator(adaface_ckpt_path)
 
-        adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
-                                            out_id_embs_scale=adaface_id_cfg_scale, update_text_encoder=True)
-        # adaface_prompt_embeds: [1, 77, 768].
-        adaface_prompt_embeds, _ = adaface.encode_prompt(prompt)
+        with torch.no_grad():
+            adaface.generate_adaface_embeddings(image_folder=None, image_paths=uploaded_image_paths,
+                                                out_id_embs_scale=adaface_id_cfg_scale, update_text_encoder=True)
+            # adaface_prompt_embeds: [1, 77, 768].
+            adaface_prompt_embeds, _ = adaface.encode_prompt(prompt)
 
     # init_img_file_paths is a list of image paths. If not chose, init_img_file_paths is None.
     if init_img_file_paths is not None:
